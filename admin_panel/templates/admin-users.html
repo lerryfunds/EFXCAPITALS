@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Users — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="users">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Users</h1>
+        <p>Create, edit, disable (deactivate), or delete user accounts.</p>
+        {% for message in messages %}
+          {{message}}
+        {% endfor %}
+      </div>
+      <a href="{% url "admin_user_create" %}" class="btn btn-gold">＋ Create User</a>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="s-ico">⌕</span>
+        <input id="userSearch" type="text" placeholder="Search by name, username or email…">
+      </div>
+    </div>
+
+    <div class="panel" style="padding:8px 24px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>User</th><th>Username</th><th>Balance</th><th>Status</th><th>Created</th><th style="text-align:right">Actions</th></tr>
+          </thead>
+          <tbody id="usersBody">
+            {% for user in accounts %}
+              {% comment %} {% if not user.is_superuser %} {% endcomment %}
+                <tr>
+                  <td><div class="user-cell"><span class="avatar">{{user.user.username|slice:":1"|upper}}</span><div><b>{{user.user.get_full_name}}</b><span class="user-email">{{user.user.email}}</span></div></div></td>
+                  <td>@{{user.user.username}}</td>
+                  <td>${{user.balance}}</td>
+                  <td>  {% if user.user.is_active %}<span class="tag green">Active</span>{% else %}<span class="tag red">Disabled</span>{% endif %}</td>
+                  <td>17/10/2026</td>
+                  <td>
+                    <div class="act-row">
+                      <a href="{% url "user_edit" user.user.user_id %}" class="act-btn" title="Edit">✎</a>
+                      {% if user.user.is_active %}
+                        <a href="{% url "user_toggle_activity" user.user.user_id %}" class="act-btn red" title="Disable">X</a>
+                      {% else %}
+                        <a href="{% url "user_toggle_activity" user.user.user_id %}" class="act-btn green" title="Enable">✓</a>
+                      {% endif %}
+                      <form action="{% url "user_delete" user.user.user_id %}" method="post" id="form-{{user.user.user_id}}">
+                        {% csrf_token %}
+                        <button class="act-btn danger del-btn" title="Delete" id="{{user.user.user_id}}">🗑</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% comment %} {% endif %} {% endcomment %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-bg" id="confirmDelUser">
+  <div class="modal">
+    <h3>Delete user?</h3>
+    <p>This permanently removes <b id="delName">this user</b> and their account data. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="closeDelUser">Cancel</button>
+      <button class="btn btn-gold" id="doDeleteUser" style="background:linear-gradient(135deg,#ff8a8a,#ff5d5d);box-shadow:0 8px 24px rgba(255,93,93,.25)">Delete User</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+{% comment %} <script src="{% static "js/admin.js" %}"></script> {% endcomment %}
+<script>
+
+  let targetId = null;
+
+  document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
+  });
+  
+  document.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      targetId = btn.id;
+      openModal('confirmDelUser')
+    });
+  });
+
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  document.getElementById('confirmDelUser')?.addEventListener('click', e => {
+    if(e.target.id === 'doDeleteUser'){
+      document.getElementById(`form-${targetId}`).submit()
+    } else if(e.target.id === 'closeDelUser'){
+      closeModal('confirmDelUser');
+    }
+  });
+</script>
+</body>
+</html>

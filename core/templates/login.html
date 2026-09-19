@@ -1,0 +1,66 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-bg">
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="{% url "home" %}" class="brand">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </a>
+    <div class="nav-actions">
+      <a href="{% url "home" %}" class="btn btn-ghost">← Back to Home</a>
+      <a href="{% url "register" %}" class="btn btn-outline">Create Account</a>
+    </div>
+  </div>
+</header>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </div>
+    <h1>Welcome back</h1>
+    <p class="auth-sub">Sign in to access your EFXCAPITALS dashboard.</p>
+    {% if messages %}
+      {% for message in messages  %}
+      
+        <div style="color: red; padding: 2px"; display: block; border: 1px solid; background-color: pink; font-size: 5px; font-weight: 200;>{{message}}</div>
+      
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="field">
+        <label for="email">Username</label>
+        <input id="email" type="text" placeholder="you@example.com" required name="email_or_username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="••••••••" required name="password">
+      </div>
+      <div class="form-foot">
+        <label class="check-row"><input type="checkbox"> Remember me</label>
+        {% comment %} <a href="#">Forgot password?</a> {% endcomment %}
+      </div>
+      <button type="submit" class="btn btn-gold btn-block">Login <span class="arrow">→</span></button>
+    </form>
+
+    <p class="auth-alt">New to EFXCAPITALS? <a href="register.html">Create a free account</a></p>
+  </div>
+</main>
+
+</body>
+</html>

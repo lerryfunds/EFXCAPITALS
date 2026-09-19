@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Package — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="pkgForm">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1 id="pageTitle">Create Package</h1>
+        <p>Define a new investment package. It goes live immediately.</p>
+      </div>
+      <a href="{% url "admin_packages_list" %}" id="cancelLink" class="btn btn-ghost">Cancel</a>
+    </div>
+
+    <form class="panel" id="pkgForm" style="max-width:640px;display:flex;flex-direction:column;gap:16px" method="post">
+      {% csrf_token %}
+      <input type="hidden" id="id" value="">
+
+      <h3 class="form-section-title" id="formTitle">Identity</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Package Name</label>
+          <input id="name" type="text" placeholder="Oil" required name="package-name" value="{{package_name}}">
+        </div>
+        <div class="field">
+          <label for="subtype">Subtype / Label</label>
+          <input id="subtype" type="text" placeholder="Crude oil" name="subtype" value="{{package_subtype}}">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="name">Package Description</label>
+          <textarea id="name" type="text" placeholder="Describe the package" required name="package-description" >{{package.description}}</textarea>
+        </div>
+      </div>
+
+      <h3 class="form-section-title">Returns</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label for="roi">ROI per cycle (%)</label>
+          <div class="input-icon">
+            <span class="in-sym">%</span>
+            <input id="roi" type="number" min="0" step="0.1" placeholder="6.7" required name="roi-cycle" value="{{package_roi}}">
+          </div>
+        </div>
+        <div class="field">
+          <label for="cycles">Payout Cycles</label>
+          <input id="cycles" type="number" min="1" placeholder="30" required name="payout-cycle" value="{{package_cycle}}">
+        </div>
+        <div class="field">
+          <label for="dur">Duration (days)</label>
+          <input id="dur" type="number" min="1" placeholder="30" name="duration" value="{{package_duration}}">
+        </div>
+        <div class="field">
+          <label for="interval">Cycle Interval (hours)</label>
+          <input id="interval" type="number" min="1" value="24" name="interval" value="{{package_interval}}">
+        </div>
+      </div>
+
+      <h3 class="form-section-title">Limits</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label for="min">Minimum Amount (USDT)</label>
+          <div class="input-icon">
+            <span class="in-sym">$</span>
+            <input id="min" type="number" min="0" step="0.01" placeholder="20" required name="min-amount" value="{{package_min_amount}}">
+          </div>
+        </div>
+        <div class="field">
+          <label for="max">Maximum Amount (USDT)</label>
+          <div class="input-icon">
+            <span class="in-sym">$</span>
+            <input id="max" type="number" min="0" step="0.01" placeholder="500" required name="max-amount" value="{{package_max_amount}}">
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="check-row"><input type="checkbox" {% if package.is_featured %}checked{% endif %} id="featured" name="featured?"> Featured on landing page (highlights the card)</label>
+      </div>
+
+      <hr class="divider">
+      <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+        <span class="tag green" id="savedTag" style="align-self:center;display:none">✓ Saved</span>
+        <a href="{% url "admin_packages_list" %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" id="submitBtn" class="btn btn-gold">Update</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="admin.js"></script>
+</body>
+</html>

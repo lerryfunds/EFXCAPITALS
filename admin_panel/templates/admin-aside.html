@@ -1,0 +1,14 @@
+  <aside class="sidebar">
+    <span class="side-label">Admin</span>
+    <a href="{% url "admin_dashboard" %}" data-active="admin.html" class="side-link"><span class="em">▦</span> Overview</a>
+    <a href="{% url "admin_users_view" %}" class="side-link"><span class="em">⛭</span> Users</a>
+    <a href="{% url "admin_user_create" %}" class="side-link"><span class="em">＋</span> Create User</a>
+    <a href="{% url "admin_packages_list" %}" class="side-link"><span class="em">▦</span> Packages</a>
+    <a href="{% url "package_create" %}" class="side-link"><span class="em">＋</span> Create Package</a>
+    <a href="admin-withdrawals.html" class="side-link"><span class="em">↑</span> Withdrawals <span id="pendingWCount" class="tag red" style="margin-left:auto;padding:1px 8px"></span></a>
+    <span class="side-label">System</span>
+    <a href="admin-logs.html" class="side-link"><span class="em">⌁</span> Audit Logs</a>
+    <div class="side-cta">
+      <a href="{% url "logout" %}" class="btn btn-outline btn-block">Logout</a>
+    </div>
+  </aside>

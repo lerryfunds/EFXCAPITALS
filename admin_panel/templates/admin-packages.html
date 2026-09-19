@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Packages — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="packages">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Packages</h1>
+        <p>Create, edit, activate/deactivate, or delete investment packages.</p>
+      </div>
+      <a href="{% url "package_create" %}" class="btn btn-gold">＋ Create Package</a>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="s-ico">⌕</span>
+        <input id="pkgSearch" type="text" placeholder="Search packages…">
+      </div>
+      <div class="filters-row">
+        <span class="form-hint" style="align-self:center">Toggle the switch to go live / take a package offline.</span>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:8px 24px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Package</th><th>ROI / Cycle</th><th>Range</th><th>Cycles · Duration</th><th>Live</th><th style="text-align:right">Actions</th></tr>
+          </thead>
+          <tbody id="pkgBody">
+            {% for package in packages %}
+              <tr>
+                <td title="{{package.description|slice:":25"}}..."><div style="display:flex;align-items:center;gap:11px"><span class="pkg-token">{{package.name|slice:":1"|upper}}</span>
+                  <b>
+                    {{package.name}}
+                    {% if package.is_featured %}
+                      <span class="tag gold">Featured</span>
+                    {% endif %}
+                  </b>
+                </div></td>
+                <td>{{package.roi}}% /cycle</td>
+                <td class="mono">${{package.min_amount}} · ${{package.max_amount}}</td>
+                <td>{{package.cycle}} · {{package.duration}}d</td>
+                <td><a href="{% url 'toggle_package_active' package.id %}"><button class="toggle {% if package.is_active == True %}on {% else %} off {% endif %}" title="Deactivate"></button></a></td>
+                <td>
+                  <div class="act-row">
+                    <a href="{% url "package_edit" package.id %}" class="act-btn" title="Edit">✎</a>
+                    <form method="post" action="{% url "package_delete" package.id %}" id="form-{{package.id}}">
+                      {% csrf_token %}
+                      <button class="act-btn del-btn danger" title="Delete" id="{{package.id}}">🗑</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-bg" id="confirmDelPkg">
+  <div class="modal">
+    <h3>Delete package?</h3>
+    <p>This permanently removes <b id="delPkgName">this package</b> from the platform. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="closeDelPkg">Cancel</button>
+      <button class="btn btn-gold" id="doDeletePkg" style="background:linear-gradient(135deg,#ff8a8a,#ff5d5d);box-shadow:0 8px 24px rgba(255,93,93,.25)">Delete Package</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+
+  let targetId = null;
+
+  document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+    });
+  });
+  
+  document.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      targetId = btn.id;
+      openModal('confirmDelPkg')
+    });
+  });
+
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  document.getElementById('confirmDelPkg')?.addEventListener('click', e => {
+    if(e.target.id === 'doDeletePkg'){
+      document.getElementById(`form-${targetId}`).submit()
+    } else if(e.target.id === 'closeDelPkg'){
+      closeModal('confirmDelPkg');
+    }
+  });
+</script>
+</body>
+</html>

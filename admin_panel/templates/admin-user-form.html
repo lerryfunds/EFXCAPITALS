@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create User — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="userForm">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1 id="pageTitle">Create User</h1>
+        <p>Create a new account or update an existing user's details.</p>
+        {% for message in messages %}
+          <span>{{message}}</span>
+        {% endfor %}
+      </div>
+      <a href="{% url "admin_users_view" %}" id="cancelLink" class="btn btn-ghost">Cancel</a>
+    </div>
+
+    <form method="post" class="panel" id="userForm" style="max-width:640px;display:flex;flex-direction:column;gap:16px">
+      {% csrf_token %}
+      <input type="hidden" id="id" value="">
+
+      <h3 class="form-section-title" id="formTitle">Account Details</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Full Name</label>
+          <input id="name" type="text" placeholder="Jane Doe" required name="full_name" value="{{user.get_full_name}}">
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="janedoe" required name="username" value={{user.username}} {% if edit %}disabled{% endif %}>
+        </div>
+        <div class="field full">
+          <label for="email">Email Address</label>
+          <input id="email" type="email" placeholder="jane@example.com" required name="email" value={{user.email}}>
+        </div>
+        {% if not edit %}
+          <div class="field">
+            <label for="username">Password</label>
+            <input id="password" type="password" placeholder="********" required name="password">
+          </div>
+          <div class="field">
+            <label for="username">Confirm Password</label>
+            <input id="c_password" type="password" placeholder="********" required name="c_password">
+          </div>
+        {% endif %}
+      </div>
+
+      <h3 class="form-section-title">Wallet</h3>
+      {% if not edit %}
+        <div class="field">
+          <label for="balance">Wallet Type</label>
+          <div class="input-icon">
+            <select name="wallet-type" id="wallet-type" style="width: 100%;">
+              <option value="USDT" disabled>USDT</option>
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="SOL">SOL</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="balance">Wallet Address</label>
+          <div class="input-icon">
+            <input id="address" type="text" placeholder="Enter yoru wallet address" name="address">
+          </div>
+        </div>
+      {% endif %}
+      <div class="field">
+        <label for="balance">Wallet Balance</label>
+        <div class="input-icon">
+          <span class="in-sym">$</span>
+          <input id="balance" type="number" min="0" step="0.01" placeholder="0.00" name="balance" value="{{account.balance}}">
+        </div>
+      </div>
+
+      {% if not edit %}
+        <h3 class="form-section-title">Access</h3>
+        <div class="form-grid">
+          <div class="field">
+            <label for="role">Role</label>
+            <select id="role" name="role">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="status">Account Status</label>
+            <select id="status" name="status">
+              <option value="active">Active</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+        </div>
+      {% endif %}
+      <p class="form-hint">Disabled users cannot log in or activate packages until re-enabled.</p>
+
+      <hr class="divider">
+      <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+        {% comment %} <span class="tag green" id="savedTag" style="align-self:center">✓ Saved</span> {% endcomment %}
+        <a href="{% url "admin_users_view" %}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" id="submitBtn" class="btn btn-gold">Create User</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+{% comment %} <script src="admin.js"></script> {% endcomment %}
+</body>
+</html>

@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Overview — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="overview">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Admin Overview</h1>
+        <p>Platform health at a glance — users, packages, approvals, and activity.</p>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Total Users</span><span class="w-chip">All</span></div>
+        <b id="stUsers">{{total_users}}</b>
+        <div class="w-note">Registered accounts</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Active Users</span><span class="w-chip green">Live</span></div>
+        <b id="stActive">{{active_users}}</b>
+        <div class="w-note">Not disabled</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Active Packages</span></div>
+        <b id="stPackages">{{active_packages}}</b>
+        <div class="w-note">Live on the site</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Pending Withdrawals</span><span class="w-chip red" id="stPending">–</span></div>
+        <b id="stWdAmt">–</b>
+        <div class="w-note">Awaiting approval</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Pending Withdrawals</h3>
+        <a href="admin-withdrawals.html">Review all →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>User</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead>
+          <tbody id="recentWd"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Recent Users</h3>
+        <a href="admin-users.html">Manage users →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>User</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody id="recentUsers">
+            {% for user in recent_users %}
+              <tr>
+                <td><div class="user-cell"><span class="avatar">{{user.user.username|slice:":1"|upper}}</span><div><b>{{user.user.get_full_name}}</b><span class="user-email">@{{user.user.username}}</span></div></div></td>
+                <td>${{user.balance}}</td>
+                {% if user.user.is_active %}
+                  <td><span class="tag green">Active</span></td>
+                {% else %}
+                  <td><span class="tag grey">Inactive</span></td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Recent Activity</h3>
+        <a href="admin-logs.html">Full audit log →</a>
+      </div>
+      <div id="recentLogs"></div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="{% static "css/admin.js" %}"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-bg">
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="{% url "home" %}" class="brand">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </a>
+    <div class="nav-actions">
+      <a href="{% url "home" %}" class="btn btn-ghost">← Back to Home</a>
+      <a href="{% url "login" %}" class="btn btn-outline">Login</a>
+    </div>
+  </div>
+</header>
+
+<main class="auth-wrap">
+  <div class="auth-card wide">
+    <div class="auth-logo">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </div>
+    <h1>Create your account</h1>
+    <p class="auth-sub">Register and access your dashboard directly — no email verification wait.</p>
+    {% for message in messages %}
+      {{message}}
+    {% endfor %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label for="fname">Full Name</label>
+          <input id="fname" type="text" placeholder="John Carter" required name="full_name">
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" placeholder="johndoe" required name="username">
+        </div>
+        <div class="field full">
+          <label for="email">Email Address</label>
+          <input id="email" type="email" placeholder="you@example.com" required name="email">
+        </div>
+        <div class="field">
+          <label for="email">Wallet Address</label>
+          <input id="email" type="text" placeholder="Enter your wallet address" required name="address">
+        </div>
+        <div class="field">
+          <label for="email">Wallet Type</label>
+          <select name="wallet-type" id="wallet-type">
+            <option value="USDT">USDT</option>
+            <option value="BTC">BTC</option>
+            <option value="ETH">ETH</option>
+            <option value="SOL">SOL</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="referral">Referral Code <small>(optional)</small></label>
+          <input id="referral" type="text" placeholder="EX-12345" name="referral">
+        </div>
+        <div class="field">
+          <label for="phone">WhatsApp Number</label>
+          <input id="phone" type="tel" placeholder="+1 555 000 1234" name="whatsapp-number">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••••" required name="password">
+        </div>
+        <div class="field">
+          <label for="confirm">Confirm Password</label>
+          <input id="confirm" type="password" placeholder="••••••••" required name="c_password">
+        </div>
+        <div class="field full">
+          <label class="check-row"><input type="checkbox" required> I agree to the <a href="#" style="color:var(--gold)">Terms of Service</a> and <a href="privacy.html" style="color:var(--gold)">Privacy Policy</a></label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-gold btn-block">Create Free Account <span class="arrow">→</span></button>
+    </form>
+
+    <p class="auth-alt">Already have an account? <a href="{% url "login" %}">Login here</a></p>
+  </div>
+</main>
+
+</body>
+</html>

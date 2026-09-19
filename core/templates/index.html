@@ -1,0 +1,367 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EFXCAPITALS — Stock · Investment</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="#" class="brand">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </a>
+    <nav class="nav-links">
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#plans">Plans</a>
+      <a href="#faq">FAQ</a>
+      <a href="{% url "privacy" %}">Privacy</a>
+    </nav>
+    <div class="nav-actions">
+      {% if is_logged_in %}
+      <a href="
+        {% if is_admin %} {% url "admin_dashboard" %} {% else %} {% url "dashboard" %} {% endif %}
+      " class="btn btn-login">Dashboard <span class="arrow">→</span></a>
+      {% else %}
+      <a href="{% url "login" %}" class="btn btn-login">Login <span class="arrow">→</span></a>
+      {% endif %}
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ TICKER ============ -->
+<div class="ticker">
+  <div class="ticker-track">
+    <div class="ticker-group">
+      <span class="tick"><b>Crude Oil</b> <em class="up">+2.4%</em></span>
+      <span class="tick"><b>USDT</b> <em>$1.00</em></span>
+      <span class="tick"><b>Natural Gas</b> <em class="up">+1.8%</em></span>
+      <span class="tick"><b>Live Packages</b> <em>5</em></span>
+      <span class="tick"><b>Secure Dashboard</b> <em>24/7</em></span>
+      <span class="tick"><b>Withdrawals</b> <em>Tracked</em></span>
+      <span class="tick"><b>WhatsApp Support</b> <em>Online</em></span>
+    </div>
+    <div class="ticker-group" aria-hidden="true">
+      <span class="tick"><b>Crude Oil</b> <em class="up">+2.4%</em></span>
+      <span class="tick"><b>USDT</b> <em>$1.00</em></span>
+      <span class="tick"><b>Natural Gas</b> <em class="up">+1.8%</em></span>
+      <span class="tick"><b>Live Packages</b> <em>5</em></span>
+      <span class="tick"><b>Secure Dashboard</b> <em>24/7</em></span>
+      <span class="tick"><b>Withdrawals</b> <em>Tracked</em></span>
+      <span class="tick"><b>WhatsApp Support</b> <em>Online</em></span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <h1>Your Money <br> Your Growth <br> Your Future</h1>
+      <p>
+        EFXCAPITALS connects your users to structured investment
+        packages with daily tracked profits, wallet-based funding, and clean
+        USDT-focused workflows across web and mobile.
+      </p>
+      <div class="hero-actions">
+        <a href="{% url "register" %}" class="btn btn-gold btn-lg">Start Earning Now <span class="arrow">→</span></a>
+        <a href="{% url "login" %}" class="btn btn-ghost btn-lg"><span class="play">▶</span> Monitor Account</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><b>5</b><span>Live Packages</span></div>
+        <div class="stat"><b>$100</b><span>Starting Amount</span></div>
+        <div class="stat"><b>6.7%</b><span>Top ROI</span></div>
+        <div class="stat"><b>24/7</b><span>Support Access</span></div>
+      </div>
+    </div>
+
+    <aside class="featured-card">
+      <div class="fc-head">
+        <span class="badge-soft">EFXCAPITALS</span>
+        <span class="badge-featured">Featured</span>
+      </div>
+      <h3>Featured Plan Entry</h3>
+      <div class="fc-price">$100.00 <small>USDT · Package activation</small></div>
+      <div class="fc-roi">Best ROI <b>6.7%</b></div>
+      <div class="fc-meta">
+        <div class="meta-item"><b>5</b><span>Plans</span></div>
+        <div class="meta-item"><b>34d</b><span>Avg Duration</span></div>
+        <div class="meta-item"><b>0</b><span>Discounts</span></div>
+      </div>
+      <hr>
+      <h4>Plan Highlights</h4>
+      <ul class="fc-highlights">
+        <li><span><em>Oil</em> 30 days · 30 cycles</span><b>6.7%</b></li>
+        <li><span><em>Gas</em> 30 days · 30 cycles</span><b>6.7%</b></li>
+        <li><span><em>Gold</em> 50 days · 50 cycles</span><b>4%</b></li>
+      </ul>
+      <div class="fc-foot">
+        <span>Top Return Package <b>6.7%</b></span>
+        <a href="#" class="wa-link">WhatsApp Support<br>0356589</a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ WHY EFXCAPITALS ============ -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Why EFXCAPITALS</span>
+      <h2>Everything you need to invest<br>with confidence</h2>
+      <p>Clean onboarding, wallet-based investing, tracked withdrawals, referral logic, and admin-side controls in one focused investment workflow.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="f-icon">▦</span>
+        <h3>Real Package Configuration</h3>
+        <p>Plans, cycles, discount windows, referral rules, and limits are managed from your own admin data, not hardcoded into the page.</p>
+      </div>
+      <div class="feature-card">
+        <span class="f-icon">⟁</span>
+        <h3>USDT Deposit Workflow</h3>
+        <p>Users can submit deposits with transaction hash and proof, while admin can review, approve, reject, and keep the evidence visible on both sides.</p>
+      </div>
+      <div class="feature-card">
+        <span class="f-icon">⛨</span>
+        <h3>Controlled Access</h3>
+        <p>Separate user and admin auth flows, account status controls, and action audit notifications keep operations tighter and easier to manage.</p>
+      </div>
+      <div class="feature-card">
+        <span class="f-icon">▤</span>
+        <h3>Mobile-Ready Screens</h3>
+        <p>The landing page and core app flows are laid out to stay usable on narrow screens instead of shrinking desktop UI into unreadable blocks.</p>
+      </div>
+      <div class="feature-card">
+        <span class="f-icon">⚡</span>
+        <h3>Fast Activation Flow</h3>
+        <p>Users can sign up, log in, fund the wallet, and activate a package with minimal friction through the existing wallet-balance investment flow.</p>
+      </div>
+      <div class="feature-card">
+        <span class="f-icon">♜</span>
+        <h3>Live Admin Management</h3>
+        <p>Packages, wallets, users, withdrawals, deposits, notifications, and settings are manageable directly from the admin panel without code edits.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section section-alt" id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Simple Process</span>
+      <h2>Start earning in 4 easy steps</h2>
+      <p>From account creation to package activation, the path stays short and understandable.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step">
+        <span class="step-num">1</span>
+        <h3>Create Account</h3>
+        <p>Register and access your dashboard directly without waiting for signup email verification.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <h3>Deposit USDT</h3>
+        <p>Submit a deposit request with network, transaction hash, amount, and screenshot proof.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <h3>Choose a Package</h3>
+        <p>Pick one of the active packages configured in your admin panel and review its live limits.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">4</span>
+        <h3>Track &amp; Withdraw</h3>
+        <p>Monitor wallet balance, profit releases, transaction history, and proof-backed withdrawals from one place.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PLANS ============ -->
+<section class="section" id="plans">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Investment Plans</span>
+      <h2>Choose your growth plan</h2>
+      <p>This section now renders your actual package records. When you add or edit packages in admin, they update here automatically.</p>
+      <span class="badge-live">Featured</span>
+    </div>
+    <div class="plans-grid">
+
+      {% for package in active_packages %}
+        <article class="plan-card {% if package.is_featured %}featured-plan{% endif %}">
+          {% if package.is_featured %}<span class="plan-badge">Featured</span>{% endif %}
+          <h3>{{package.name}}</h3>
+          <div class="plan-roi">6.7% <small>/cycle ROI</small></div>
+          <p class="plan-sub">{{package.subtype}}</p>
+          <p class="plan-desc">{{package.description}}</p>
+          <div class="plan-range">Minimum: ${{package.min_amount}} <span>|</span> Maximum: ${{package.max_amount}}</div>
+          {% if package.is_featured %}<a href="{% url "login" %}" class="btn btn-gold">Invest Now</a>{% else %}<a href="{% url "register" %}" class="btn btn-outline">Get Started</a>{% endif %}
+        </article>
+
+      {% endfor %}
+      
+      {% comment %} <article class="plan-card">
+        <h3>Gas</h3>
+        <div class="plan-roi">6.7% <small>/cycle ROI</small></div>
+        <p class="plan-sub">LPG GAS</p>
+        <p class="plan-desc">This is most important</p>
+        <div class="plan-range">Minimum: $500.00 <span>|</span> Maximum: $1,000.00</div>
+        <ul class="plan-list">
+          <li>30-day package duration</li>
+          <li>30 payout cycles</li>
+          <li>24 hours cycle interval</li>
+          <li>Starts around $33.50 on max ROI at minimum amount</li>
+          <li>Multiple active investments allowed</li>
+          <li>Wallet reactivation allowed</li>
+        </ul>
+        <a href="{% url "register" %}" class="btn btn-outline">Get Started</a>
+      </article> {% endcomment %}
+
+      
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section section-alt" id="faq">
+  <div class="container faq-wrap">
+    <div class="section-head">
+      <span class="eyebrow">FAQ</span>
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-stats">
+        <div class="stat"><b>5</b><span>Active Packages</span></div>
+        <div class="stat"><b>100</b><span>Minimum Entry</span></div>
+        <div class="stat"><b>34d</b><span>Average Duration</span></div>
+        <div class="stat"><b>0</b><span>Discounted Plans</span></div>
+      </div>
+      <div class="usdt-note">₮ <b>Powered by USDT</b> <span>Deposit, profit, and withdrawal workflows are built around stablecoin handling.</span></div>
+    </div>
+    <div class="faq-list">
+      <details>
+        <summary>Can users sign up without email OTP?</summary>
+        <p>Signup is instant — new accounts access the dashboard immediately without waiting for an email verification step.</p>
+      </details>
+      <details>
+        <summary>How do proof uploads work?</summary>
+        <p>Deposits and withdrawals accept screenshot proof along with transaction details, and the evidence stays visible to both user and admin.</p>
+      </details>
+      <details>
+        <summary>Where do users contact support?</summary>
+        <p>Support is reachable through the in-app Help Center and WhatsApp support links available from the site and dashboard.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRIVACY ============ -->
+<section class="section" id="privacy">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Privacy Policy</span>
+      <h2>Your data, your rights</h2>
+      <p>Users should be able to understand trust signals quickly, especially on mobile.</p>
+    </div>
+    <div class="privacy-grid">
+      <div class="privacy-card">
+        <span class="p-icon">⛨</span>
+        <h3>Protected Accounts</h3>
+        <p>Authentication, session handling, and account role separation are already built into the application.</p>
+      </div>
+      <div class="privacy-card">
+        <span class="p-icon">⌁</span>
+        <h3>Proof-Based Operations</h3>
+        <p>Deposits and withdrawals include file-backed verification paths so operational actions are easier to validate later.</p>
+      </div>
+      <div class="privacy-card">
+        <span class="p-icon">▤</span>
+        <h3>Transparent Package Rules</h3>
+        <p>Plan durations, cycle counts, ROI ranges, discounts, and referral gates are visible through package configuration rather than hidden logic.</p>
+      </div>
+      <div class="privacy-card">
+        <span class="p-icon">♜</span>
+        <h3>Managed Platform Controls</h3>
+        <p>Operational details like support contacts and withdrawal thresholds stay organized through centralized platform controls.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta">
+  <div class="container cta-inner">
+    <h2>Ready to earn with EFXCAPITALS?</h2>
+    <p>Sign in, fund your wallet, and activate one of your live packages from the dashboard.</p>
+    <a href="{% url "register" %}" class="btn btn-gold btn-lg">Create Free Account <span class="arrow">→</span></a>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="brand">
+        <span class="brand-mark">EX</span>
+        <span class="brand-text">EFX<b>CAPITALS</b></span>
+      </a>
+      <!-- <p>Oil · Gas · Investment</p> -->
+      <p>A focused investment platform with package management, wallet workflows, proof-backed transactions, and user-friendly controls across web and mobile.</p>
+      <div class="footer-badges">
+        <span class="chip">₮ Powered by USDT</span>
+        <span class="chip">EX Powered by EFXCAPITALS</span>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <a href="#home">Home</a>
+      <a href="#features">Features</a>
+      <a href="#plans">Investment Plans</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="privacy.html">Legal · Privacy Policy</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <a href="{% url "register" %}">Create Account</a>
+      <a href="{% url "login" %}">User Login</a>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <a href="#">Help Center</a>
+      <a href="#">WhatsApp Support</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">© 2026 EFXCAPITALS. All rights reserved. · <a href="admin-{% url "login" %}" style="color:var(--muted)">Admin Console</a></div>
+  </div>
+</footer>
+
+<script>
+  const burger = document.getElementById('hamburger');
+  const nav = document.querySelector('.nav-links');
+  burger.addEventListener('click', () => {
+    nav.classList.toggle('open');
+    burger.classList.toggle('open');
+  });
+  nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    nav.classList.remove('open');
+    burger.classList.remove('open');
+  }));
+</script>
+</body>
+</html>

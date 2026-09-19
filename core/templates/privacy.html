@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </a>
+    <nav class="nav-links">
+      <a href="{% url "home" %}">Home</a>
+      <a href="{% url "home" %}#features">Features</a>
+      <a href="{% url "home" %}#plans">Plans</a>
+      <a href="{% url "home" %}#faq">FAQ</a>
+      <a href="{% url "privacy" %}" style="color:var(--gold)">Privacy</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-login">Login <span class="arrow">→</span></a>
+    </div>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="eyebrow">Privacy Policy</span>
+      <h2>Your data, your rights</h2>
+      <p>Last updated: September 2026</p>
+    </div>
+
+    <div class="panel prose">
+      <h2>1. Introduction</h2>
+      <p>EFXCAPITALS ("we", "our", "us") provides a structured oil and gas investment platform with wallet-based funding and proof-backed transactions. This policy explains what data we collect, how we use it, and the rights you hold over it.</p>
+
+      <h2>2. Information we collect</h2>
+      <ul>
+        <li><b>Account details</b> — name, email, username, WhatsApp number, and password.</li>
+        <li><b>Financial records</b> — deposit amounts, wallet addresses, transaction hashes, withdrawal requests, and investment activity.</li>
+        <li><b>Proof uploads</b> — screenshots and files submitted as evidence for deposits and withdrawals.</li>
+        <li><b>Technical data</b> — device type, browser, and basic usage patterns for security and performance.</li>
+      </ul>
+
+      <h2>3. How we use your data</h2>
+      <ul>
+        <li>Operate your account, wallet balance, and investment packages.</li>
+        <li>Process and verify deposits and withdrawals with proof-backed flows.</li>
+        <li>Prevent fraud, money laundering, and unauthorized access.</li>
+        <li>Contact you about account activity, support, and essential updates.</li>
+      </ul>
+
+      <h2>4. Data sharing</h2>
+      <p>We do not sell your personal data. Information is only shared where required to operate the platform — such as fraud-prevention or payment-processing services — or where we are legally obligated to do so.</p>
+
+      <h2>5. Data security</h2>
+      <p>Protected accounts. Authentication, session handling, and account role separation are built into the application. Deposit and withdrawal evidence stays visible on both user and admin sides to make operations easier to validate later.</p>
+
+      <h2>6. Your rights</h2>
+      <ul>
+        <li>Access and export your account data.</li>
+        <li>Correct inaccurate personal information.</li>
+        <li>Request deletion of your account and associated data.</li>
+        <li>Withdraw consent for optional communications.</li>
+      </ul>
+
+      <h2>7. Cookies</h2>
+      <p>We use essential cookies to keep you signed in and to protect your session. No third-party advertising cookies are used on this platform.</p>
+
+      <h2>8. Contact</h2>
+      <p>Questions about this policy can be sent through our <a href="#" style="color:var(--gold)">Help Center</a> or WhatsApp support channels available on the site and dashboard.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-bottom">
+    <div class="container">© 2026 EFXCAPITALS. All rights reserved.</div>
+  </div>
+</footer>
+
+</body>
+</html>
