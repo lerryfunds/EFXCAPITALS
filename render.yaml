@@ -11,7 +11,7 @@ services:
     plan: free
     autoDeploy: true
     healthCheckPath: /healthz/
-    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py ensure_admin"
     startCommand: "gunicorn efxcapitals.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     numInstances: 1
     envVars:
@@ -27,3 +27,9 @@ services:
         value: ".onrender.com"
       - key: DJANGO_CSRF_TRUSTED_ORIGINS
         value: "https://*.onrender.com"
+      - key: DJANGO_ADMIN_USERNAME
+        value: "admin"
+      - key: DJANGO_ADMIN_EMAIL
+        value: "admin@efxcapitals.com"
+      - key: DJANGO_ADMIN_PASSWORD
+        sync: false
