@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib import messages
 from decimal import Decimal
@@ -8,6 +9,8 @@ from .currency import get_rates
 User = get_user_model()
 
 # Create your views here.
+def health_view(request):
+    return HttpResponse("ok")
 def home_view(request):
     packages = Packages.objects.filter(is_active = True).order_by("-is_featured")
     context = {

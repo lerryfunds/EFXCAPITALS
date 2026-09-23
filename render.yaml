@@ -10,10 +10,10 @@ services:
     runtime: python
     plan: free
     autoDeploy: true
-    healthCheckPath: /
+    healthCheckPath: /healthz/
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
     preDeployCommand: "python manage.py migrate --noinput"
-    startCommand: "gunicorn efxcapitals.wsgi:application"
+    startCommand: "gunicorn efxcapitals.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     numInstances: 1
     envVars:
       - key: DATABASE_URL
