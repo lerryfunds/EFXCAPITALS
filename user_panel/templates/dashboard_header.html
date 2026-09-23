@@ -1,0 +1,15 @@
+<header class="appbar">
+  <div class="container appbar-inner">
+    <a href="{% url "home" %}" class="brand">
+      <span class="brand-mark">EX</span>
+      <span class="brand-text">EFX<b>CAPITALS</b></span>
+    </a>
+    <div class="appbar-right">
+      {% comment %} <button class="icon-btn" title="Notifications">🔔<span class="dot"></span></button> {% endcomment %}
+      <div class="user-chip">
+        <span class="avatar">{{ request.user.username|slice:":2"|upper }}</span>
+        <span class="u-name">{{ request.user.get_full_name }}</span>
+      </div>
+    </div>
+  </div>
+</header>

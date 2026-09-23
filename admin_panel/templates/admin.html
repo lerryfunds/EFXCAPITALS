@@ -42,8 +42,8 @@
         <div class="w-note">Live on the site</div>
       </div>
       <div class="w-card">
-        <div class="w-top"><span class="w-label">Pending Withdrawals</span><span class="w-chip red" id="stPending">–</span></div>
-        <b id="stWdAmt">–</b>
+        <div class="w-top"><span class="w-label">Pending Withdrawals</span><span class="w-chip red">{{ pending_count }}</span></div>
+        <b>${{ pending_sum }}</b>
         <div class="w-note">Awaiting approval</div>
       </div>
     </div>
@@ -51,12 +51,23 @@
     <div class="panel">
       <div class="panel-head">
         <h3>Pending Withdrawals</h3>
-        <a href="admin-withdrawals.html">Review all →</a>
+        <a href="{% url "admin_withdrawals" "all" %}">Review all →</a>
       </div>
       <div class="table-wrap">
         <table class="table">
           <thead><tr><th>User</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead>
-          <tbody id="recentWd"></tbody>
+          <tbody id="recentWd">
+            {% for withdrawal in pending_withdrawals %}
+            <tr>
+              <td>{{ withdrawal.user.get_full_name|default:"Unknown" }}</td>
+              <td class="mono">{{ withdrawal.id|stringformat:"s"|slice:":10" }}…</td>
+              <td>{{ withdrawal.amount }}</td>
+              <td><span class="tag gold">PENDING</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty">No pending withdrawals.</div></td></tr>
+            {% endfor %}
+          </tbody>
         </table>
       </div>
     </div>
@@ -64,7 +75,7 @@
     <div class="panel">
       <div class="panel-head">
         <h3>Recent Users</h3>
-        <a href="admin-users.html">Manage users →</a>
+        <a href="{% url "admin_users_view" %}">Manage users →</a>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -88,15 +99,27 @@
 
     <div class="panel">
       <div class="panel-head">
-        <h3>Recent Activity</h3>
-        <a href="admin-logs.html">Full audit log →</a>
+        <h3>Recent Support Messages</h3>
+        <a href="{% url "admin_support" %}">View all →</a>
       </div>
-      <div id="recentLogs"></div>
+      <div>
+        {% for support in recent_support %}
+        <div class="log-item">
+          <span class="l-dot info"></span>
+          <div>
+            <span class="l-who">{{ support.user.user.get_full_name }}</span>
+            <div class="l-action"><b>{{ support.subject }}</b> — {{ support.message|truncatechars:70 }}</div>
+          </div>
+          <span class="l-time">{{ support.date_sent|date:"d M, H:i" }}</span>
+        </div>
+        {% empty %}
+        <div class="empty">No support messages yet.</div>
+        {% endfor %}
+      </div>
     </div>
   </main>
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="{% static "css/admin.js" %}"></script>
 </body>
 </html>

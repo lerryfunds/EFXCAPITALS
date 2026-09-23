@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referrals — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Referral Program</h1>
+        <p>Invite friends and earn ${{ reward|floatformat:2 }} for every account that signs up with your code.</p>
+      </div>
+      <span class="tag gold">{{ total_invites }} Invites</span>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Your referral code</h3>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Share this link with friends</b><span>They use it on signup to credit you as the referrer</span></div>
+        <div style="text-align:right;font-size:16px"><b class="mono" id="refLinkText" style="color:var(--gold)">{{ referral_link }}</b></div>
+        <div class="inv-nums"><b>+${{ total_earned|floatformat:2 }}</b><span>Total commission earned</span></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+        <button class="copy-btn" onclick="copyRef(this)">Copy Link</button>
+      </div>
+    </div>
+
+    <div class="wallet-grid">
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Total Invites</span></div>
+        <b>{{ total_invites }}</b>
+        <div class="w-note">Users joined via your code</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Commission Earned</span></div>
+        <b>${{ total_earned|floatformat:2 }}</b>
+        <div class="w-note">Already credited to your wallet</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Bonus Per Invite</span></div>
+        <b>${{ reward|floatformat:2 }}</b>
+        <div class="w-note">Paid immediately on signup</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Referred Users</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>User</th><th>Joined</th><th>Your Commission</th></tr>
+          </thead>
+          <tbody>
+            {% for r in referrals %}
+            <tr>
+              <td><b>{{ r.referred.username }}</b></td>
+              <td>{{ r.date|date:"d M Y" }}</td>
+              <td><span class="tag green">+${{ r.reward|floatformat:2 }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3"><div class="empty">No referrals yet. Share your link to get started.</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+function copyRef(btn){
+  navigator.clipboard.writeText(document.getElementById("refLinkText").textContent).then(()=>{
+    const t = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(()=>btn.textContent = t, 1600);
+  });
+}
+</script>
+
+</body>
+</html>

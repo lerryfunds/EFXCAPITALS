@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deposits — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="deposits">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Deposits</h1>
+        <p>Verify deposit requests and credit user wallets.</p>
+      </div>
+      <span class="tag gold">{{ pending_count }} pending</span>
+    </div>
+
+    <div class="panel" style="padding:8px 24px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Ref</th><th>User</th><th>Amount</th><th>Network</th><th>TXID</th><th>Requested</th><th>Status</th><th style="text-align:right">Decision</th></tr>
+          </thead>
+          <tbody>
+            {% for deposit in deposits %}
+            <tr>
+              <td class="mono">{{deposit.id|stringformat:"s"|slice:":10"}}…</td>
+              <td><b>{{deposit.user.get_full_name|default:"Unknown"}}</b><span class="user-email" style="display:block">@{{deposit.user.username}}</span></td>
+              <td>{{deposit.amount}}</td>
+              <td>{{deposit.wallet_type}}</td>
+              <td><span class="mono" style="font-size:11.5px">{{deposit.tx_hash|default:"—"|slice:":16"}}</span></td>
+              <td>{{deposit.date_requested|date:"d M Y, H:i"}}</td>
+              <td><span class="tag {% if deposit.status == 'APPROVED' %}green{% elif deposit.status == 'REJECTED' %}red{% else %}gold{% endif %}">{{deposit.status|upper}}</span></td>
+              <td>
+                {% if deposit.status == "PENDING" %}
+                <div class="act-row">
+                  <a href="{% url "approve_deposit" deposit.id %}" class="act-btn green" title="Approve & Credit">✓ Approve</a>
+                  <a href="{% url "reject_deposit" deposit.id %}" class="act-btn danger" title="Reject">✕</a>
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8"><div class="empty">No deposit requests yet.</div></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+</body>
+</html>

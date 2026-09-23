@@ -50,7 +50,7 @@
                   <td>@{{user.user.username}}</td>
                   <td>${{user.balance}}</td>
                   <td>  {% if user.user.is_active %}<span class="tag green">Active</span>{% else %}<span class="tag red">Disabled</span>{% endif %}</td>
-                  <td>17/10/2026</td>
+                  <td>{{ user.user.date_joined|date:"d/m/Y" }}</td>
                   <td>
                     <div class="act-row">
                       <a href="{% url "user_edit" user.user.user_id %}" class="act-btn" title="Edit">✎</a>
@@ -95,6 +95,15 @@
   document.querySelectorAll("form").forEach(form => {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+    });
+  });
+
+  const userSearch = document.getElementById("userSearch");
+  const userRows = Array.from(document.querySelectorAll("#usersBody tr"));
+  userSearch.addEventListener("input", () => {
+    const q = userSearch.value.trim().toLowerCase();
+    userRows.forEach(row => {
+      row.style.display = !q || row.textContent.toLowerCase().includes(q) ? "" : "none";
     });
   });
   

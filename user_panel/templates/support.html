@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Support</h1>
+        <p>24/7 help via WhatsApp or our in-platform help center.</p>
+        {% if messages %}
+          {% for message in messages %}
+            <p>{{message}}</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <span class="tag green">Online</span>
+    </div>
+
+    <div class="quick-row">
+      <a href="https://wa.me/" target="_blank" class="quick-card">
+        <span class="dir">＠</span>
+        <span><b>WhatsApp Support</b><em>Fastest response · 24/7</em></span>
+      </a>
+      <a href="{% url "home" %}#faq" class="quick-card">
+        <span class="dir">?</span>
+        <span><b>FAQ</b><em>Common questions</em></span>
+      </a>
+      <a href="{% url "privacy" %}" class="quick-card">
+        <span class="dir">⛨</span>
+        <span><b>Privacy Policy</b><em>How your data is used</em></span>
+      </a>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Send us a message</h3>
+      </div>
+      <form style="display:flex;flex-direction:column;gap:16px" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+          <div class="field">
+            <label for="topic">Topic</label>
+            <select id="topic" name="topic">
+              <option value="Deposit issue">Deposit issue</option>
+              <option value="Withdrawal issue">Withdrawal issue</option>
+              <option value="Package / investment">Package / investment</option>
+              <option value="Account access">Account access</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="subj">Subject</label>
+            <input id="subj" name="subject" type="text" placeholder="Brief summary" required>
+          </div>
+          <div class="field full">
+            <label for="msg">Message</label>
+            <textarea id="msg" name="message" placeholder="Describe your issue, include reference numbers or TXIDs where relevant" required></textarea>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gold" style="align-self:flex-start">Send Message</button>
+      </form>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

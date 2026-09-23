@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Packages — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Investment Packages</h1>
+        <p>Choose a plan and activate it with funds from your wallet.</p>
+      </div>
+      <span class="tag gold">Wallet: ${{account.balance}}</span>
+    </div>
+
+    <div class="pkg-grid">
+
+      {% for package in packages %}
+          <article class="pkg-card">
+          {% if package.is_featured %}<span class="p-badge best">Featured</span>{% endif %}
+          <h3>{{package.name}}</h3>
+          <p class="p-sub">{{package.subtype}}</p>
+          <div class="p-roi">{{package.roi}}% <small>/cycle ROI</small></div>
+          <div class="p-range">${{package.min_amount}} min · ${{package.max_amount}} max</div>
+          <a href="{% url "package-activate" package.id %}" class="btn {% if package.is_featured %}btn-gold {% else %} btn-outline {% endif %} btn-block">Activate Package</a>
+        </article>
+      {% endfor %}
+
+      {% comment %} <article class="pkg-card">
+        <h3>Gas</h3>
+        <p class="p-sub">LPG Gas</p>
+        <div class="p-roi">6.7% <small>/cycle ROI</small></div>
+        <div class="p-range">$500.00 min · $1,000.00 max</div>
+        <ul>
+          <li>30-day duration</li>
+          <li>30 payout cycles</li>
+          <li>24h cycle interval</li>
+          <li>Wallet reactivation allowed</li>
+        </ul>
+        <a href="activate.html?plan=gas" class="btn btn-outline btn-block">Activate Package</a>
+      </article> {% endcomment %}
+
+      
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="settings">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Settings</h1>
+        <p>Platform-level wallet details and referral reward.</p>
+      </div>
+    </div>
+
+    {% for message in messages %}
+      <span class="tag green">{{message}}</span>
+    {% endfor %}
+
+    <form class="panel" style="max-width:640px;display:flex;flex-direction:column;gap:16px" method="post" action="{% url "admin_settings" %}">
+      {% csrf_token %}
+
+      <h3 class="form-section-title">Deposit Wallet</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label for="wtype">Wallet Type</label>
+          <select id="wtype" name="wallet-type">
+            <option value="USDT" {% if platform.wallet_type == "USDT" %}selected{% endif %}>USDT</option>
+            <option value="BTC" {% if platform.wallet_type == "BTC" %}selected{% endif %}>BTC</option>
+            <option value="ETH" {% if platform.wallet_type == "ETH" %}selected{% endif %}>ETH</option>
+            <option value="SOL" {% if platform.wallet_type == "SOL" %}selected{% endif %}>SOL</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="waddress">Wallet Address</label>
+          <input id="waddress" type="text" placeholder="Enter the USDT receive address" required name="wallet-address" value="{{platform.wallet_address}}">
+        </div>
+      </div>
+
+      <h3 class="form-section-title">Referrals</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label for="reward">Referral Reward (USDT)</label>
+          <div class="input-icon">
+            <span class="in-sym">$</span>
+            <input id="reward" type="number" min="0" step="0.01" placeholder="25.00" name="referral-reward" value="{{platform.referral_reward}}">
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+        <button type="submit" class="btn btn-gold">Save Settings</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+</body>
+</html>

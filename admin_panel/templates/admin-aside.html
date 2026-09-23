@@ -5,9 +5,12 @@
     <a href="{% url "admin_user_create" %}" class="side-link"><span class="em">＋</span> Create User</a>
     <a href="{% url "admin_packages_list" %}" class="side-link"><span class="em">▦</span> Packages</a>
     <a href="{% url "package_create" %}" class="side-link"><span class="em">＋</span> Create Package</a>
-    <a href="admin-withdrawals.html" class="side-link"><span class="em">↑</span> Withdrawals <span id="pendingWCount" class="tag red" style="margin-left:auto;padding:1px 8px"></span></a>
+    <a href="{% url "admin_withdrawals" "all" %}" class="side-link"><span class="em">↑</span> Withdrawals</a>
+    <a href="{% url "admin_deposits" %}" class="side-link"><span class="em">↓</span> Deposits</a>
+    <a href="{% url "admin_support" %}" class="side-link"><span class="em">✉</span> Support Messages</a>
     <span class="side-label">System</span>
-    <a href="admin-logs.html" class="side-link"><span class="em">⌁</span> Audit Logs</a>
+    <a href="{% url "admin_logs" %}" class="side-link"><span class="em">⌁</span> Audit Logs</a>
+    <a href="{% url "admin_settings" %}" class="side-link"><span class="em">⚙</span> Settings</a>
     <div class="side-cta">
       <a href="{% url "logout" %}" class="btn btn-outline btn-block">Logout</a>
     </div>

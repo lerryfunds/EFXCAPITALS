@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deposit USDT — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Deposit USDT</h1>
+        <p>Fund your wallet with USDT — funds are credited after admin approval.</p>
+      </div>
+      <span class="tag gold">Wallet: ${{account.balance}}</span>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p style="font-size:13.5px;color:{% if message.tags == 'error' %}var(--red){% else %}var(--green){% endif %}">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+
+    <div class="info-box">
+      <h3>How to deposit</h3>
+      <ol>
+        <li>Select a network and copy the deposit address below.</li>
+        <li>Send USDT from your wallet or exchange to that address.</li>
+        <li>Paste the transaction hash (TXID) in the form and submit.</li>
+        <li>Admin reviews and your balance is credited once approved.</li>
+      </ol>
+      <div class="address-copy">
+        <address>{{ platform_address|default:"Set a platform wallet address in the admin settings" }}</address>
+        {% if platform_address %}
+          <button class="copy-btn" onclick="copyAddress(this)">Copy</button>
+        {% endif %}
+      </div>
+    </div>
+
+    <form class="panel" style="display:flex;flex-direction:column;gap:18px" method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label for="network">Network</label>
+          <select id="network" name="wallet_type">
+            <option>USDT</option>
+            <option>ETH</option>
+            <option>BTC</option>
+            <option>SOL</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="amount">Amount (USDT)</label>
+          <div class="input-icon">
+            <span class="in-sym">$</span>
+            <input id="amount" type="number" placeholder="100.00" min="1" step="0.01" required name="amount">
+          </div>
+        </div>
+        <div class="field full">
+          <label for="txhash">Transaction Hash (TXID)</label>
+          <input id="txhash" type="text" placeholder="Paste the blockchain transaction ID" required name="tx_hash">
+        </div>
+      </div>
+      <div class="warn">
+        <span class="w-icon">!</span>
+        <span>Only send <b>USDT</b> on the selected network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
+      </div>
+      <button type="submit" class="btn btn-gold btn-block">Submit Deposit</button>
+    </form>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-head">
+        <h3>Recent Deposits</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Date</th><th>Amount</th><th>Network</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for d in deposits %}
+            <tr>
+              <td>{{ d.date_requested|date:"d M Y, H:i" }}</td>
+              <td><b>${{ d.amount|floatformat:2 }}</b></td>
+              <td>{{ d.wallet_type }}</td>
+              <td><span class="tag {% if d.status == 'APPROVED' %}green{% elif d.status == 'REJECTED' %}red{% else %}gold{% endif %}">{{ d.status|title }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4"><div class="empty">No deposits yet.</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+function copyAddress(btn){
+  navigator.clipboard.writeText(document.querySelector('address').textContent.trim()).then(()=>{
+    const t = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    setTimeout(()=>btn.textContent = t, 1600);
+  });
+}
+</script>
+
+</body>
+</html>

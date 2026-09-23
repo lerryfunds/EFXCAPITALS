@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib import messages
+from decimal import Decimal
+from .models import Account, Packages, Referral, Transaction, PlatformSettings
+
 User = get_user_model()
-from .models import Account, Packages
 
 # Create your views here.
 def home_view(request):
@@ -19,7 +21,9 @@ def privacy_view(request):
 
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect("dasboard")
+        if request.user.is_superuser:
+            return redirect("admin_dashboard")
+        return redirect("dashboard")
 
     if request.method == "POST":
         form = request.POST
@@ -62,8 +66,9 @@ def register_view(request):
             return redirect("register")
 
         email = form.get("email")
-        wallet_type = form.get("wallet-type")
+        wallet_type = form.get("wallet-type") or "USDT"
         wallet_address = form.get("address")
+        phone_number = form.get("whatsapp-number", "").strip()
         password = form.get("password")
         c_password = form.get("c_password")
         if password != c_password:
@@ -76,6 +81,8 @@ def register_view(request):
             last_name = last_name,
             email = email,
         )
+        if phone_number:
+            user.phone_number = phone_number
 
         user.set_password(password)
 
@@ -87,6 +94,27 @@ def register_view(request):
 
         user.save()
         account.save()
+
+        ref_code = request.GET.get("ref", "").strip()
+        if ref_code:
+            referrer_account = Account.objects.filter(referral_code = ref_code).exclude(user = user).first()
+            if referrer_account:
+                reward = PlatformSettings.load().referral_reward
+                Referral.objects.create(
+                    referrer = referrer_account.user,
+                    referred = user,
+                    reward = reward,
+                )
+                referrer_account.balance += reward
+                referrer_account.save()
+                Transaction.objects.create(
+                    user = referrer_account.user,
+                    tx_type = "REFERRAL",
+                    amount = reward,
+                    status = "COMPLETED",
+                    description = f"Bonus for referring {username}"
+                )
+                messages.success(request, f"Welcome! {referrer_account.user.username} earned a referral bonus.")
         return redirect("login")
     
     return render(request, "register.html")

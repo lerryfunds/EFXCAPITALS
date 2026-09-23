@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdraw — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Withdraw Funds</h1>
+        <p>Request a withdrawal to your USDT wallet — tracked and proof-backed.</p>
+      </div>
+      <span class="tag gold">Available: ${{account.balance}}</span>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <p style="font-size:13.5px;color:{% if message.tags == 'error' %}var(--red){% else %}var(--green){% endif %}">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
+
+    <div class="info-box">
+      <h3>Withdrawal rules</h3>
+      <ol>
+        <li>Minimum withdrawal is <b>$20.00</b>. No maximum limit.</li>
+        <li>Withdrawals are reviewed by admin and processed on your selected network.</li>
+        <li>Always double-check your wallet address — mistakes cannot be reversed.</li>
+      </ol>
+    </div>
+
+    <form class="panel" style="display:flex;flex-direction:column;gap:18px" method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="field">
+          <label for="network">Network</label>
+          <select id="network" name="wallet_type">
+            <option>USDT</option>
+            <option>ETH</option>
+            <option>BTC</option>
+            <option>SOL</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="amount">Amount (USDT)</label>
+          <div class="input-icon">
+            <span class="in-sym">$</span>
+            <input id="amount" type="number" placeholder="100.00" min="20" step="0.01" required name="amount">
+          </div>
+        </div>
+        <div class="field full">
+          <label for="address">USDT Wallet Address</label>
+          <input id="address" name="address" type="text" placeholder="Your TRC20 / ERC20 / BEP20 address" required>
+        </div>
+        <div class="field full">
+          <label for="note">Note <small>(optional)</small></label>
+          <textarea id="note" name="description" placeholder="Describe this withdraw requ>est"></textarea>
+        </div>
+      </div>
+      <div class="warn">
+        <span class="w-icon">!</span>
+        <span>Withdrawal requests are reviewed before processing. Make sure your address matches the selected network to avoid delays or loss of funds.</span>
+      </div>
+      <button type="submit" class="btn btn-gold btn-block">Request Withdrawal</button>
+    </form>
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Withdrawals — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="withdrawals">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Withdrawals</h1>
+        <p>Approve requests to release funds, or reject with a logged reason.</p>
+      </div>
+      <span class="tag gold">{{ pending_count }} pending</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="filters-row">
+        <select id="wdFilter">
+          <option value="{% url "admin_withdrawals" "all" %}">All statuses</option>
+          <option value="{% url "admin_withdrawals" "pending" %}">Pending</option>
+          <option value="{% url "admin_withdrawals" "approved" %}">Approved</option>
+          <option value="{% url "admin_withdrawals" "rejected" %}">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:8px 24px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Ref</th><th>User</th><th>Amount</th><th>Network</th><th>Address</th><th>Requested</th><th style="text-align:right">Decision</th></tr>
+          </thead>
+          <tbody id="wdBody">
+            {% for withdrawal in withdrawals %}
+            <tr>
+              <td class="mono">{{withdrawal.id|stringformat:"s"|slice:":10"}}...</td>
+              <td><b>{{withdrawal.user.get_full_name}}</b></td>
+              <td>{{withdrawal.amount}}</td>
+              <td>{{withdrawal.wallet_type}}</td>
+              <td><span class="mono" style="font-size:11.5px">{{withdrawal.address|slice:":6"}}...</span></td>
+              <td>{{withdrawal.date_requested}}</td>
+              <td>
+                {% if withdrawal.status == "PENDING" %}
+                <div class="act-row">
+                  <a href="{% url "approve_withdrawals" withdrawal.id %}" class="act-btn green" title="Approve">✓ Approve</a>
+                  <a href="{% url "reject_withdrawals" withdrawal.id %}" class="act-btn danger" title="Reject">✕</a>
+                </div>
+                {% else %}
+                <div class="act-row">
+                  <span class="tag {% if withdrawal.status == "APPROVED" %}green{% else %}red{% endif %}">{{withdrawal.status|upper}}</span>
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+{% comment %} <script src="admin.js"></script> {% endcomment %}
+<script>
+  document.getElementById("wdFilter").addEventListener("change", function () {
+    if (this.value) window.location.href = this.value;
+  });
+</script>
+</body>
+</html>

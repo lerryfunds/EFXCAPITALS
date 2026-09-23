@@ -1,0 +1,154 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Messages — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="support">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Support Messages</h1>
+        <p>Every message users have sent through the support form.</p>
+      </div>
+      <span class="tag gold">{{ total_messages }} total</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <span class="s-ico">⌕</span>
+        <input id="supportSearch" type="text" placeholder="Search by sender, subject or message…">
+      </div>
+      <div class="filters-row">
+        <select id="topicFilter">
+          <option value="">All topics</option>
+          {% for topic in topics %}
+            <option value="{{ topic }}">{{ topic }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:8px 24px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Sender</th><th>Topic</th><th>Subject</th><th>Message</th><th>Sent</th><th>Status</th><th style="text-align:right">Action</th></tr>
+          </thead>
+          <tbody id="supportBody">
+            {% for support in support_messages %}
+            <tr data-topic="{{ support.topic }}">
+              <td>
+                <div class="user-cell">
+                  <span class="avatar">{{ support.user.user.username|slice:":1"|upper }}</span>
+                  <div>
+                    <b>{{ support.user.user.get_full_name }}</b>
+                    <span class="user-email">{{ support.user.user.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td><span class="tag gold">{{ support.topic }}</span></td>
+              <td><b>{{ support.subject }}</b></td>
+              <td style="max-width:280px;color:var(--muted);font-size:13px">{{ support.message|truncatechars:80 }}</td>
+              <td style="white-space:nowrap">{{ support.date_sent|date:"d M Y, H:i" }}</td>
+              <td><span class="tag {% if support.status == 'REPLIED' %}green{% elif support.status == 'READ' %}blue{% else %}gold{% endif %}">{{ support.status|default:"UNREAD"|upper }}</span></td>
+              <td>
+                <div class="act-row">
+                  <button class="act-btn view-msg"
+                    data-topic="{{ support.topic }}"
+                    data-subject="{{ support.subject }}"
+                    data-sender="{{ support.user.user.get_full_name }}"
+                    data-email="{{ support.user.user.email }}"
+                    data-date="{{ support.date_sent|date:"d M Y, H:i" }}"
+                    data-message="{{ support.message }}"
+                    title="View full message">View</button>
+                  {% if support.status != "REPLIED" %}
+                    <a href="{% url "support_mark_replied" support.id %}" class="act-btn green" title="Mark as replied">✎</a>
+                  {% endif %}
+                  {% if support.status == "UNREAD" %}
+                    <a href="{% url "support_mark_read" support.id %}" class="act-btn" title="Mark as read">✓</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7"><div class="empty">No support messages yet.</div></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-bg" id="viewMessage">
+  <div class="modal" style="max-width:560px">
+    <h3 id="msgSubject">Message</h3>
+    <p>
+      <span class="tag gold" id="msgTopic"></span>
+      &nbsp;<b id="msgSender" style="color:var(--text)"></b>
+      <span class="user-email" id="msgEmail"></span>
+      &nbsp;· <span id="msgDate"></span>
+    </p>
+    <p id="msgBody" style="color:var(--text);white-space:pre-wrap;margin-bottom:20px"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="closeViewMessage">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+  const rows = Array.from(document.querySelectorAll("#supportBody tr"));
+  const searchInput = document.getElementById("supportSearch");
+  const topicSelect = document.getElementById("topicFilter");
+
+  function applyFilters() {
+    const query = searchInput.value.trim().toLowerCase();
+    const topic = topicSelect.value;
+    rows.forEach(row => {
+      if (!row.dataset.topic) return;
+      const matchesTopic = !topic || row.dataset.topic === topic;
+      const matchesSearch = !query || row.textContent.toLowerCase().includes(query);
+      row.style.display = matchesTopic && matchesSearch ? "" : "none";
+    });
+  }
+
+  searchInput.addEventListener("input", applyFilters);
+  topicSelect.addEventListener("change", applyFilters);
+
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+  document.querySelectorAll(".view-msg").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.getElementById("msgSubject").textContent = btn.dataset.subject;
+      document.getElementById("msgTopic").textContent = btn.dataset.topic;
+      document.getElementById("msgSender").textContent = btn.dataset.sender;
+      document.getElementById("msgEmail").textContent = btn.dataset.email ? " · " + btn.dataset.email : "";
+      document.getElementById("msgDate").textContent = btn.dataset.date;
+      document.getElementById("msgBody").textContent = btn.dataset.message;
+      openModal("viewMessage");
+    });
+  });
+
+  document.getElementById("viewMessage")?.addEventListener("click", e => {
+    if (e.target.id === "closeViewMessage" || e.target.id === "viewMessage") closeModal("viewMessage");
+  });
+</script>
+</body>
+</html>

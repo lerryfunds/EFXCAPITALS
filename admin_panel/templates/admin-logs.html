@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Logs — EFXCAPITALS Admin</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-page="logs">
+
+{% include "admin-header.html" %}
+
+<div class="app-body">
+  {% include "admin-aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Audit Logs</h1>
+        <p>Every privileged action performed by administrators on the platform.</p>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:8px 24px">
+      {% for log in logs %}
+      <div class="log-item">
+        <span class="l-dot {% if 'Reject' in log.action or 'Deleted' in log.action or 'error' in log.action|lower %}danger{% elif 'Approved' in log.action or 'Created' in log.action %}success{% else %}info{% endif %}"></span>
+        <div>
+          <span class="l-who">{{ log.admin.username|default:"system" }}</span>
+          <div class="l-action"><b>{{ log.action }}</b>{% if log.detail %} — {{ log.detail }}{% endif %}</div>
+        </div>
+        <span class="l-time">{{ log.date|date:"d M Y, H:i" }}</span>
+      </div>
+      {% empty %}
+      <div class="empty">No audit entries yet.</div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+</body>
+</html>

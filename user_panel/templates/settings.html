@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Settings</h1>
+        <p>Manage your profile, security, and notification preferences.</p>
+        {% if messages %}
+          {% for message in messages %}
+            <p>{{message}}</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+
+    <form class="panel" style="display:flex;flex-direction:column;gap:18px" method="post">
+      {% csrf_token %}
+      <div class="panel-head" style="margin-bottom:0">
+        <h3>Profile Information</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="fname">Full Name</label>
+          <input id="fname" type="text" value="{{account.user.get_full_name}}" name="fullname">
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" type="text" value="{{account.user.username}}" name="username" disabled>
+        </div>
+        <div class="field">
+          <label for="email">Email Address</label>
+          <input id="email" type="email" value="{{account.user.email}}" name="email" disabled>
+        </div>
+        <div class="field">
+          <label for="phone">WhatsApp Number</label>
+          <input id="phone" type="tel" value="{{account.user.phone_number}}" name="phone_number">
+        </div>
+      </div>
+
+      <div class="panel-head" style="margin-bottom:0;padding-top:8px;border-top:1px solid var(--line)">
+        <h3>Security</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label for="cpass">Current Password</label>
+          <input id="cpass" type="password" placeholder="••••••••" name="old_password">
+        </div>
+        <div class="field">
+          <label for="npass">New Password</label>
+          <input id="npass" type="password" placeholder="••••••••" name="new_password">
+        </div>
+        {% comment %} <div class="field full">
+          <label class="check-row"><input type="checkbox" checked> Enable login notifications on new devices</label>
+        </div> {% endcomment %}
+      </div>
+
+      {% comment %} <div class="panel-head" style="margin-bottom:0;padding-top:8px;border-top:1px solid var(--line)">
+        <h3>Notifications</h3>
+      </div>
+      <div class="form-grid">
+        <div class="field">
+          <label class="check-row"><input type="checkbox" checked> Profit cycle payouts</label>
+        </div>
+        <div class="field">
+          <label class="check-row"><input type="checkbox" checked> Deposit &amp; withdrawal updates</label>
+        </div>
+        <div class="field">
+          <label class="check-row"><input type="checkbox"> Promotional offers</label>
+        </div>
+        <div class="field">
+          <label class="check-row"><input type="checkbox" checked> Security alerts</label>
+        </div>
+      </div> {% endcomment %}
+
+      <button type="submit" class="btn btn-gold" style="align-self:flex-start">Save Changes</button>
+    </form>
+  </main>
+</div>
+
+</body>
+</html>

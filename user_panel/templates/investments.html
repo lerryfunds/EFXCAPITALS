@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Investments — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>My Investments</h1>
+        <p>Track your active packages, cycles, and projected returns.</p>
+      </div>
+      <a href="{% url "packages" %}" class="btn btn-gold">Activate New <span class="arrow">→</span></a>
+    </div>
+
+    <div class="wallet-grid">
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Active Packages</span></div>
+        <b>{{userpackages.count}}</b>
+        <div class="w-note">
+          {% for package in userpackages %}{{package.package.name}} · {% empty %} No investments found {% endfor %}
+        </div>
+      </div>
+      {% comment %} <div class="w-card">
+        <div class="w-top"><span class="w-label">Total Invested</span></div>
+        <b>$2,570.00</b>
+        <div class="w-note">Principal on active plans</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Profit Released</span><span class="w-chip green">Active</span></div>
+        <b>$302.84</b>
+        <div class="w-note">All-time</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Projected Earnings</span></div>
+        <b>$187.92</b>
+        <div class="w-note">Remaining cycles</div>
+      </div> {% endcomment %}
+    </div>
+
+    {% for package in userpackages %}
+      <div class="panel">
+      <div class="panel-head">
+        <h3>Oil Package — Active</h3>
+        <span class="tag green">Running</span>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Capital invested</b></div>
+        <div></div>
+        <div class="inv-nums"><b>${{package.amount}}</b><span>min · ${{package.package.max_amount}} max</span></div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Cycle progress</b><span>Cycle {{package.days}} of {{package.package.cycle}} · {{package.package.interval}}h interval</span></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)"><span>{{package.parse_progress}}% complete</span><span>{{package.cycles_left}} cycles left</span></div>
+          <div class="progress"><div class="progress-bar" style="width:{{package.parse_progress}}%"></div></div>
+        </div>
+        <div class="inv-nums"><b>ROI {{package.package.roi}}%/cycle</b><span>Next payout: +${{package.perCycle}}</span></div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Total projected</b><span>Capital + {{package.package.cycle}} profit cycles</span></div>
+        <div></div>
+        <div class="inv-nums"><b>${{package.total_projected}}</b><span>at min amount</span></div>
+      </div>
+    </div>
+
+    {% empty %}
+
+      <div class="panel">
+        <p>No investments made yet</p>
+        <small style="color: rgb(170, 170, 170)">Ready to start investing?</small>
+        <br>
+        <br>
+        <a href="{% url "packages" %}" class="btn btn-gold">Activate New <span class="arrow">→</span></a>
+      </div>
+
+    {% endfor %}
+
+    {% comment %} <div class="panel">
+      <div class="panel-head">
+        <h3>Gold Package — Active</h3>
+        <span class="tag green">Running</span>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Capital invested</b></div>
+        <div></div>
+        <div class="inv-nums"><b>$2,000.00</b><span>min · $5,000.00 max</span></div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Cycle progress</b><span>Cycle 8 of 50 · 24h interval</span></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)"><span>16% complete</span><span>42 cycles left</span></div>
+          <div class="progress"><div class="progress-bar" style="width:16%"></div></div>
+        </div>
+        <div class="inv-nums"><b>ROI 4%/cycle</b><span>Next payout: +$32.00</span></div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Total projected</b><span>Capital + 50 profit cycles</span></div>
+        <div></div>
+        <div class="inv-nums"><b>$6,000.00</b><span>at this amount</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Gas Package — Active</h3>
+        <span class="tag green">Running</span>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Capital invested</b></div>
+        <div></div>
+        <div class="inv-nums"><b>$50.00</b><span>min · $1,000.00 max</span></div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Cycle progress</b><span>Cycle 2 of 30 · 24h interval</span></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)"><span>7% complete</span><span>28 cycles left</span></div>
+          <div class="progress"><div class="progress-bar" style="width:7%"></div></div>
+        </div>
+        <div class="inv-nums"><b>ROI 6.7%/cycle</b><span>Next payout: +$3.35</span></div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-name"><b>Total projected</b><span>Capital + 30 profit cycles</span></div>
+        <div></div>
+        <div class="inv-nums"><b>$150.50</b><span>at this amount</span></div>
+      </div>
+    </div> {% endcomment %}
+  </main>
+</div>
+
+</body>
+</html>

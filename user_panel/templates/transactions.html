@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transactions — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Transactions</h1>
+        <p>Complete history of your deposits, withdrawals, profits, and bonuses.</p>
+      </div>
+    </div>
+
+    <div class="wallet-grid">
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Total In</span><span class="w-chip green">Credited</span></div>
+        <b>${{ total_in|floatformat:2 }}</b>
+        <div class="w-note">Deposits + profits + bonuses</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Total Out</span></div>
+        <b>${{ total_out|floatformat:2 }}</b>
+        <div class="w-note">Withdrawals + investments</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Pending</span><span class="w-chip red">{{ pending_count }}</span></div>
+        <b>${{ pending_sum|floatformat:2 }}</b>
+        <div class="w-note">Awaiting admin review</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Net Balance</span></div>
+        <b>${{ account.balance|floatformat:2 }}</b>
+        <div class="w-note">Current wallet USDT</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>All Transactions</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Date</th><th>Type</th><th>Reference</th><th>Detail</th><th>Amount</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            <tr>
+              <td>{{ t.date|date:"d M Y" }}</td>
+              <td><b>{{ t.tx_type|title }}</b></td>
+              <td class="mono">{{ t.reference|stringformat:"s"|slice:":8"|upper }}</td>
+              <td>{{ t.description }}</td>
+              <td><b style="color:{% if t.amount < 0 %}var(--red){% else %}var(--green){% endif %}">{% if t.amount < 0 %}−${{ t.amount|floatformat:2|cut:"-" }}{% else %}+${{ t.amount|floatformat:2 }}{% endif %}</b></td>
+              <td><span class="tag {% if t.status == 'COMPLETED' %}green{% elif t.status == 'PENDING' %}gold{% else %}red{% endif %}">{{ t.status|title }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6"><div class="empty">No transactions yet.</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

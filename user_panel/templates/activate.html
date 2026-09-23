@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activate Package — EFXCAPITALS</title>
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1 id="pageTitle">Activate Package</h1>
+        <p>Fund the package from your wallet balance in just a few steps.</p>
+        {% if messages %}
+          {% for message in messages %}
+            <p>{{message}}</p>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <span class="tag gold" id="walletTag">Wallet: ${{account.balance}}</span>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="wizard-steps" style="margin-bottom:26px">
+      <div class="w-step active" id="ws1"><span class="w-num">1</span> Amount</div>
+      <span class="w-sep" id="ws12"></span>
+      <div class="w-step" id="ws2"><span class="w-num">2</span> Review</div>
+      <span class="w-sep" id="ws23"></span>
+      <div class="w-step" id="ws3"><span class="w-num">3</span> Confirmed</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3 id="planName">Oil Package</h3>
+        <span class="tag gold" id="planRoiTag">6.7% / cycle</span>
+      </div>
+
+      <!-- STEP 1: Amount -->
+      <div class="activation-box" id="step1">
+        <div class="panel" style="margin:0;background:var(--bg)">
+          <div class="amount-input">
+            <label for="amount">Investment amount (USDT)</label>
+            <div class="input-icon">
+              <span class="in-sym">$</span>
+              <form action="{% url "package-activate" package.id %}" id="package-create-form" method="post">
+                {% csrf_token %}
+                <input id="amount" type="number" min="1" step="0.01" placeholder="Enter amount" name=amount>
+              </form>
+            </div>
+            <div class="minmax">
+              <span>Min: <b id="minVal">${{package.min_amount}}</b></span>
+              <span>Max: <b id="maxVal">${{package.max_amount}}</b></span>
+            </div>
+            <div class="balance-note">
+              <span>Wallet balance: <b id="walletBal">${{account.balance}}</b></span>
+              <a href="#" id="useMax" style="color:var(--gold);font-weight:600">Use max</a>
+            </div>
+            <div class="err-msg" id="errMsg">Amount must be between the package minimum and maximum, and no more than your wallet balance.</div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin:0;background:var(--bg)">
+          <h4 style="font-family:var(--head);margin-bottom:10px" id="overviewTitle">Oil · 30 cycles</h4>
+          <div class="sum-box">
+            <div class="sum-row"><span>Package duration</span><b id="ovDur">30 days</b></div>
+            <div class="sum-row"><span>Payout cycles</span><b id="ovCycles">30 cycles</b></div>
+            <div class="sum-row"><span>Cycle interval</span><b id="ovInt">24 hours</b></div>
+            <div class="sum-row"><span>Wallet reactivation</span><b>Allowed</b></div>
+          </div>
+        </div>
+        <div class="full" style="grid-column:1/-1;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap">
+          <a href="{% url "packages" %}" class="btn btn-ghost">← Back to Packages</a>
+          <button class="btn btn-gold btn-lg" id="goReview" onclick="goReview()">Continue to Review <span class="arrow">→</span></button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Review -->
+      <div class="activation-box" id="step2" style="display:none">
+        <div class="panel" style="margin:0;background:var(--bg)">
+          <h4 style="font-family:var(--head);margin-bottom:8px" id="revTitle">Review your investment</h4>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Confirm the details below — activation deducts the amount from your wallet immediately.</p>
+          <div class="sum-box">
+            <div class="sum-row"><span>Package</span><b id="revName">Oil Package</b></div>
+            <div class="sum-row"><span>Capital amount</span><b id="revAmount">$0.00</b></div>
+            <div class="sum-row"><span>ROI per cycle</span><b id="revRoi">6.7%</b></div>
+            <div class="sum-row"><span>Payout cycles</span><b id="revCycles">30</b></div>
+            <div class="sum-row"><span>Cycle interval</span><b>24 hours</b></div>
+            <div class="sum-row"><span>Duration</span><b id="revDur">30 days</b></div>
+            <div class="sum-row"><span>Wallet after activation</span><b id="revRemain">$0.00</b></div>
+            <div class="sum-row total"><span>Total projected return</span><b id="revTotal">$0.00</b></div>
+          </div>
+        </div>
+        <div class="panel" style="margin:0;background:var(--bg)">
+          <h4 style="font-family:var(--head);margin-bottom:12px">Payout breakdown</h4>
+          <div class="sum-box">
+            <div class="sum-row"><span>Capital returned</span><b id="bdCapital">$0.00</b></div>
+            <div class="sum-row"><span>Profit (all cycles)</span><b id="bdProfit">$0.00</b></div>
+            <div class="sum-row"><span>First payout estimate</span><b id="bdFirst">$0.00</b></div>
+            <div class="sum-row total"><span>Per cycle</span><b id="bdPerCycle">$0.00</b></div>
+          </div>
+          <div style="margin-top:8px" class="warn">
+            <span class="w-icon">!</span>
+            <span>Profits are released automatically to your wallet after each cycle completes.</span>
+          </div>
+        </div>
+        <div class="full" style="grid-column:1/-1;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-lg" onclick="backToAmount()">← Edit Amount</button>
+          <button class="btn btn-gold btn-lg" onclick="confirmActivate()">Confirm &amp; Activate <span class="arrow">→</span></button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Confirmed -->
+      <div class="success-box" id="step3" style="display:none">
+        <div class="success-icon">✓</div>
+        <h2>Package activated!</h2>
+        <p>Your <span id="okName">Oil Package</span> is now running. Payouts begin after the first 24h cycle.</p>
+        <div class="panel success-details" style="text-align:left">
+          <div class="sum-box">
+            <div class="sum-row"><span>Package</span><b id="okName2">Oil Package</b></div>
+            <div class="sum-row"><span>Capital</span><b id="okAmount">$0.00</b></div>
+            <div class="sum-row"><span>Cycles</span><b id="okCycles">30</b></div>
+            <div class="sum-row"><span>Total projected return</span><b id="okTotal">$0.00</b></div>
+          </div>
+        </div>
+        <div class="success-actions">
+          <a href="{% url "investments" %}" class="btn btn-gold">View My Investments <span class="arrow">→</span></a>
+          <a href="{% url "dashboard" %}" class="btn btn-ghost">Back to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const WALLET = {{account.balance}};
+{% comment %} const PLANS = {
+  oil:    {name:'Oil Package', sub:'Crude oil',  roi:0.067, min:20,    max:500,   cycles:30, dur:'30 days'},
+  gas:    {name:'Gas Package', sub:'LPG Gas',    roi:0.067, min:500,   max:1000,  cycles:30, dur:'30 days'},
+  gold:   {name:'Gold Package',sub:'Gold',       roi:0.04,  min:800,   max:5000,  cycles:50, dur:'50 days'},
+  crypto: {name:'Crypto Package', sub:'Cryptocurrency', roi:0.067, min:5000,  max:10000, cycles:30, dur:'30 days'},
+  premium:{name:'Premium Package', sub:'Investor', roi:0.067, min:10000, max:100000, cycles:30, dur:'30 days'}
+};
+const query = new URLSearchParams(location.search);
+const planKey = PLANS[query.get('plan')] ? query.get('plan') : 'oil';
+const P = PLANS[planKey]; {% endcomment %}
+
+const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+document.getElementById('pageTitle').textContent = 'Activate ' + "{{package.name}}";
+document.getElementById('planName').textContent = "{{package.name}}";
+document.getElementById('planRoiTag').textContent = (P.roi*100).toFixed(1) + '% / cycle';
+document.getElementById('overviewTitle').textContent = P.name + ' · ' + P.cycles + ' cycles';
+document.getElementById('ovDur').textContent = P.dur;
+document.getElementById('ovCycles').textContent = P.cycles + ' cycles';
+document.getElementById('ovInt').textContent = '24 hours';
+document.getElementById('minVal').textContent = fmt(P.min);
+document.getElementById('maxVal').textContent = fmt(P.max);
+document.getElementById('walletBal').textContent = fmt(WALLET);
+document.getElementById('walletTag').textContent = 'Wallet: ' + fmt(WALLET); 
+
+document.getElementById('useMax').addEventListener('click', e => {
+  e.preventDefault();
+  document.getElementById('amount').value = Math.min({{package.max_amount}}).toFixed(2);
+});
+
+document.getElementById('amount').addEventListener('input', () => {
+  document.getElementById('errMsg').classList.remove('show');
+});
+
+function getAmount(){
+  const v = parseFloat(document.getElementById('amount').value);
+  if (isNaN(v)) return null;
+  return v;
+}
+function validate(v){
+  if (isNaN(v) || v < {{package.min_amount}} || v > {{package.max_amount}} || v > {{account.balance}}) return false;
+  return true;
+}
+
+function setStep(n){
+  ['step1','step2','step3'].forEach(s => {
+    const el = document.getElementById(s);
+    el.style.display = s === 'step' + n ? (n === 3 ? 'block' : 'grid') : 'none';
+  });
+  ['ws1','ws2','ws3'].forEach((el,i) => {
+    document.getElementById(el).className = 'w-step' + (i+1===n ? ' active' : (i+1<n ? ' done' : ''));
+  });
+  document.getElementById('ws12').classList.toggle('done', n>1);
+  document.getElementById('ws23').classList.toggle('done', n>2);
+}
+setStep(1);
+
+function goReview(){
+  const v = getAmount();
+  if (!validate(v)){
+    document.getElementById('errMsg').classList.add('show');
+    return;
+  }
+  const perCycle = v * {{package.roi}};
+  const profit = perCycle * {{package.cycle}};
+  document.getElementById('revName').textContent = "{{package.name}}";
+  document.getElementById('revAmount').textContent = fmt(v);
+  document.getElementById('revRoi').textContent = ({{package.roi}}).toFixed(1) + '%';
+  document.getElementById('revCycles').textContent = {{package.cycle}};
+  document.getElementById('revDur').textContent = {{package.duration}};
+  document.getElementById('revRemain').textContent = fmt({{account.balance}} - v);
+  document.getElementById('revTotal').textContent = fmt(v + profit);
+  document.getElementById('bdCapital').textContent = fmt(v);
+  document.getElementById('bdProfit').textContent = fmt(profit);
+  document.getElementById('bdFirst').textContent = fmt(perCycle);
+  document.getElementById('bdPerCycle').textContent = fmt(perCycle);
+  setStep(2);
+}
+
+function backToAmount(){
+  setStep(1);
+  document.getElementById('errMsg').classList.remove('show');
+}
+
+function confirmActivate(){
+  `  const v = getAmount();
+  const perCycle = v * P.roi;
+  const profit = perCycle * P.cycles;
+  ['okName','okName2'].forEach(id => document.getElementById(id).textContent = "{{package.name}}");
+  document.getElementById('okAmount').textContent = fmt(v);
+  document.getElementById('okCycles').textContent = P.cycles;
+  document.getElementById('okTotal').textContent = fmt(v + profit);
+  setStep(3);`
+
+  document.getElementById("package-create-form").submit()
+}
+</script>
+
+</body>
+</html>
