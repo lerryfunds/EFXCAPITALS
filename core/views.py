@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model, authenticate, login, logout
 from django.contrib import messages
 from decimal import Decimal
 from .models import Account, Packages, Referral, Transaction, PlatformSettings
+from .currency import get_rates
 
 User = get_user_model()
 
@@ -12,7 +13,8 @@ def home_view(request):
     context = {
         "is_logged_in" : request.user.is_authenticated,
         "is_admin" : request.user.is_superuser,
-        "active_packages" : packages[:5]
+        "active_packages" : packages[:5],
+        "prices" : get_rates(),
     }
     return render(request, "index.html", context)
 

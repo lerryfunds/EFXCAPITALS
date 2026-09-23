@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from core.models import Withdrawal, Account, Packages, userPackage, Support, Transaction, Deposit, Referral, PlatformSettings
+from core.currency import get_rates, to_coin
 from django.contrib import messages
 from django.db.models import Sum
 from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone, timedelta
+import json
+
+def prices_json(rates):
+    return json.dumps({k: float(v) if v else None for k, v in rates.items()})
 
 # Create your views here.
 def dashboard_view(request):
@@ -17,6 +22,8 @@ def dashboard_view(request):
 
     context = {
         "account" : account,
+        "prices" : get_rates(),
+        "balance_coin" : to_coin(account.account_type, account.balance),
         "pending_count" : pending_withdrawals.count(),
         "pending_sum" : pending_withdrawals.aggregate(total = Sum("amount"))["total"] or 0,
         "active_investment_count" : active_investments.count(),
@@ -76,8 +83,11 @@ def withdraw(request):
         messages.success(request, "Withdrawal request submitted, funds are on hold pending admin review.")
         return redirect("withdraw")
 
+    prices = get_rates()
     context = {
         "account" : account,
+        "prices" : prices,
+        "prices_json" : prices_json(prices),
     }
 
     return render(request, "withdraw.html", context)
@@ -208,10 +218,13 @@ def deposit(request):
         messages.success(request, "Deposit submitted, admin will credit your wallet after verification.")
         return redirect("deposit")
 
+    prices = get_rates()
     context = {
         "account" : account,
         "platform_address" : platform.wallet_address,
         "deposits" : Deposit.objects.filter(user = request.user).order_by("-date_requested")[:10],
+        "prices" : prices,
+        "prices_json" : prices_json(prices),
     }
 
     return render(request, "deposit.html", context)

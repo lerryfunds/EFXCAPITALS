@@ -56,8 +56,8 @@ class Packages(models.Model):
     cycle = models.IntegerField()
     duration = models.IntegerField()
     interval = models.IntegerField()
-    min_amount = models.DecimalField(max_digits=5, decimal_places=2)
-    max_amount = models.DecimalField(max_digits=5, decimal_places=2)
+    min_amount = models.DecimalField(max_digits=18, decimal_places=2)
+    max_amount = models.DecimalField(max_digits=18, decimal_places=2)
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
@@ -114,7 +114,7 @@ class userPackage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     user = models.ForeignKey(Account, on_delete=models.CASCADE)
     package = models.ForeignKey(Packages, on_delete=models.CASCADE, null=True)
-    amount = models.DecimalField(max_digits=5, decimal_places=2)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
     is_active = models.BooleanField(default=True)
     date_activated = models.DateTimeField(auto_now=False, auto_now_add=True)
     days = models.IntegerField(default=0)
@@ -139,3 +139,11 @@ class Support(models.Model):
     message = models.TextField()
     status = models.CharField(max_length=10, default="UNREAD")
     date_sent = models.DateTimeField(auto_now=False, auto_now_add=True)
+
+class CryptoRate(models.Model):
+    symbol = models.CharField(max_length=10, primary_key=True)
+    usd_price = models.DecimalField(max_digits=20, decimal_places=8)
+    updated = models.DateTimeField(default=timezone.now, editable=False)
+
+    def __str__(self):
+        return f"{self.symbol} = ${self.usd_price}"

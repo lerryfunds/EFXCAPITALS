@@ -71,6 +71,10 @@
           <input id="txhash" type="text" placeholder="Paste the blockchain transaction ID" required name="tx_hash">
         </div>
       </div>
+      <div class="info-box" id="rateInfo">
+        <h3>Live rates</h3>
+        <p id="usdEst">1 USDT ≈ $1.00</p>
+      </div>
       <div class="warn">
         <span class="w-icon">!</span>
         <span>Only send <b>USDT</b> on the selected network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
@@ -106,6 +110,7 @@
 </div>
 
 <script>
+window.CRYPTORATES = {{ prices_json|safe }};
 function copyAddress(btn){
   navigator.clipboard.writeText(document.querySelector('address').textContent.trim()).then(()=>{
     const t = btn.textContent;
@@ -113,6 +118,29 @@ function copyAddress(btn){
     setTimeout(()=>btn.textContent = t, 1600);
   });
 }
+</script>
+<script>
+(function(){
+  const rates = window.CRYPTORATES || {};
+  const net = document.getElementById('network');
+  const amt = document.getElementById('amount');
+  const est = document.getElementById('usdEst');
+  const symb = (v)=> Number(v).toLocaleString('en-US',{maximumFractionDigits:2});
+  function update(){
+    const sym = (net.value || 'USDT').toUpperCase();
+    const rate = rates[sym];
+    const usd = parseFloat(amt.value) || 0;
+    if(sym === 'USDT' || !rate){
+      est.textContent = rates.USDT ? `1 ${sym} ≈ $${symb(rates.USDT)}` : 'Rate unavailable';
+      return;
+    }
+    const coin = usd / rate;
+    est.textContent = `1 ${sym} ≈ $${symb(rate)} USD · $${symb(usd)} ≈ ${coin.toFixed(6)} ${sym}`;
+  }
+  if(net) net.addEventListener('change', update);
+  if(amt) amt.addEventListener('input', update);
+  update();
+})();
 </script>
 
 </body>

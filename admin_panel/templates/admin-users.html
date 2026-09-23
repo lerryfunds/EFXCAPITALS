@@ -29,26 +29,32 @@
       <a href="{% url "admin_user_create" %}" class="btn btn-gold">＋ Create User</a>
     </div>
 
-    <div class="toolbar">
-      <div class="search">
-        <span class="s-ico">⌕</span>
-        <input id="userSearch" type="text" placeholder="Search by name, username or email…">
+<div class="toolbar">
+        <div class="search">
+          <span class="s-ico">⌕</span>
+          <input id="userSearch" type="text" placeholder="Search by name, username or email…">
+        </div>
       </div>
-    </div>
 
-    <div class="panel" style="padding:8px 24px">
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr><th>User</th><th>Username</th><th>Balance</th><th>Status</th><th>Created</th><th style="text-align:right">Actions</th></tr>
-          </thead>
-          <tbody id="usersBody">
-            {% for user in accounts %}
-              {% comment %} {% if not user.is_superuser %} {% endcomment %}
-                <tr>
-                  <td><div class="user-cell"><span class="avatar">{{user.user.username|slice:":1"|upper}}</span><div><b>{{user.user.get_full_name}}</b><span class="user-email">{{user.user.email}}</span></div></div></td>
-                  <td>@{{user.user.username}}</td>
-                  <td>${{user.balance}}</td>
+      <div class="warn" style="margin-bottom:14px">
+        <span class="w-icon">$</span>
+        <span>Live rates · 1 BTC ≈ ${{ prices.BTC }} · 1 ETH ≈ ${{ prices.ETH }} · 1 SOL ≈ ${{ prices.SOL }} · USDT ${{ prices.USDT|floatformat:2 }}</span>
+      </div>
+
+      <div class="panel" style="padding:8px 24px">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr><th>User</th><th>Username</th><th>Balance (USD)</th><th>Network</th><th>Status</th><th>Created</th><th style="text-align:right">Actions</th></tr>
+            </thead>
+            <tbody id="usersBody">
+              {% for user in accounts %}
+                {% comment %} {% if not user.is_superuser %} {% endcomment %}
+                  <tr>
+                    <td><div class="user-cell"><span class="avatar">{{user.user.username|slice:":1"|upper}}</span><div><b>{{user.user.get_full_name}}</b><span class="user-email">{{user.user.email}}</span></div></div></td>
+                    <td>@{{user.user.username}}</td>
+                    <td>${{user.balance}}</td>
+                    <td>{{user.account_type}}</td>
                   <td>  {% if user.user.is_active %}<span class="tag green">Active</span>{% else %}<span class="tag red">Disabled</span>{% endif %}</td>
                   <td>{{ user.user.date_joined|date:"d/m/Y" }}</td>
                   <td>

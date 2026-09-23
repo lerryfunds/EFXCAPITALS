@@ -44,19 +44,21 @@
 <div class="ticker">
   <div class="ticker-track">
     <div class="ticker-group">
-      <span class="tick"><b>Crude Oil</b> <em class="up">+2.4%</em></span>
-      <span class="tick"><b>USDT</b> <em>$1.00</em></span>
-      <span class="tick"><b>Natural Gas</b> <em class="up">+1.8%</em></span>
-      <span class="tick"><b>Live Packages</b> <em>5</em></span>
+      <span class="tick"><b>USDT</b> <em>${{ prices.USDT|floatformat:2 }}</em></span>
+      <span class="tick"><b>BTC</b> <em>{% if prices.BTC %}${{ prices.BTC|floatformat:0 }}{% endif %}</em></span>
+      <span class="tick"><b>ETH</b> <em>{% if prices.ETH %}${{ prices.ETH|floatformat:0 }}{% endif %}</em></span>
+      <span class="tick"><b>SOL</b> <em>{% if prices.SOL %}${{ prices.SOL|floatformat:2 }}{% endif %}</em></span>
+      <span class="tick"><b>Live Packages</b> <em>{{ active_packages|length }}</em></span>
       <span class="tick"><b>Secure Dashboard</b> <em>24/7</em></span>
       <span class="tick"><b>Withdrawals</b> <em>Tracked</em></span>
       <span class="tick"><b>WhatsApp Support</b> <em>Online</em></span>
     </div>
     <div class="ticker-group" aria-hidden="true">
-      <span class="tick"><b>Crude Oil</b> <em class="up">+2.4%</em></span>
-      <span class="tick"><b>USDT</b> <em>$1.00</em></span>
-      <span class="tick"><b>Natural Gas</b> <em class="up">+1.8%</em></span>
-      <span class="tick"><b>Live Packages</b> <em>5</em></span>
+      <span class="tick"><b>USDT</b> <em>${{ prices.USDT|floatformat:2 }}</em></span>
+      <span class="tick"><b>BTC</b> <em>{% if prices.BTC %}${{ prices.BTC|floatformat:0 }}{% endif %}</em></span>
+      <span class="tick"><b>ETH</b> <em>{% if prices.ETH %}${{ prices.ETH|floatformat:0 }}{% endif %}</em></span>
+      <span class="tick"><b>SOL</b> <em>{% if prices.SOL %}${{ prices.SOL|floatformat:2 }}{% endif %}</em></span>
+      <span class="tick"><b>Live Packages</b> <em>{{ active_packages|length }}</em></span>
       <span class="tick"><b>Secure Dashboard</b> <em>24/7</em></span>
       <span class="tick"><b>Withdrawals</b> <em>Tracked</em></span>
       <span class="tick"><b>WhatsApp Support</b> <em>Online</em></span>

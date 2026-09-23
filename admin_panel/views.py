@@ -3,6 +3,7 @@ from django.core.exceptions import BadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from core.models import Packages, Account, Withdrawal, Support, Deposit, Transaction, AuditLog, PlatformSettings
+from core.currency import get_rates
 from django.contrib import messages
 from django.db.models import Sum
 from django.utils import timezone
@@ -41,6 +42,7 @@ def admin_users(request):
 
     context = {
         "accounts" : accounts,
+        "prices" : get_rates(),
     }
 
     return render(request, "admin-users.html", context)

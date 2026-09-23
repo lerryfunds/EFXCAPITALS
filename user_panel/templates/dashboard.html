@@ -29,7 +29,7 @@
       <div class="w-card grad">
         <div class="w-top"><span class="w-label">Wallet Balance</span></div>
         <b>${{account.balance}}</b>
-        <div class="w-note">Available USDT</div>
+        <div class="w-note">Available USDT{% if balance_coin %} · ≈ {{ balance_coin|floatformat:6 }} {{ account.account_type }}{% endif %}</div>
       </div>
       {% comment %} <div class="w-card">
         <div class="w-top"><span class="w-label">Total Invested</span><span class="w-chip">Active</span></div>
@@ -61,6 +61,31 @@
         <span class="dir">+</span>
         <span><b>Activate Package</b><em>Browse live plans</em></span>
       </a>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Market Rates</h3>
+        <span class="tag green">Live · 5 min cache</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+        <div class="info-chip" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13.5px;color:var(--muted)">
+          <b style="display:block;color:var(--text);font-family:var(--head);font-size:17px;margin-bottom:4px">USDT</b>
+          {% if prices.USDT %}${{ prices.USDT|floatformat:2 }}{% else %}—{% endif %}
+        </div>
+        <div class="info-chip" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13.5px;color:var(--muted)">
+          <b style="display:block;color:var(--text);font-family:var(--head);font-size:17px;margin-bottom:4px">BTC</b>
+          {% if prices.BTC %}${{ prices.BTC|floatformat:0 }}{% else %}—{% endif %}
+        </div>
+        <div class="info-chip" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13.5px;color:var(--muted)">
+          <b style="display:block;color:var(--text);font-family:var(--head);font-size:17px;margin-bottom:4px">ETH</b>
+          {% if prices.ETH %}${{ prices.ETH|floatformat:0 }}{% else %}—{% endif %}
+        </div>
+        <div class="info-chip" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13.5px;color:var(--muted)">
+          <b style="display:block;color:var(--text);font-family:var(--head);font-size:17px;margin-bottom:4px">SOL</b>
+          {% if prices.SOL %}${{ prices.SOL|floatformat:2 }}{% else %}—{% endif %}
+        </div>
+      </div>
     </div>
 
     <div class="panel">

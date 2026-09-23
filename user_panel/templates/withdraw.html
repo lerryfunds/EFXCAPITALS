@@ -60,13 +60,17 @@
           </div>
         </div>
         <div class="field full">
-          <label for="address">USDT Wallet Address</label>
-          <input id="address" name="address" type="text" placeholder="Your TRC20 / ERC20 / BEP20 address" required>
+          <label for="address">Network Address</label>
+          <input id="address" name="address" type="text" placeholder="Your wallet address on the selected network" required>
         </div>
         <div class="field full">
           <label for="note">Note <small>(optional)</small></label>
           <textarea id="note" name="description" placeholder="Describe this withdraw requ>est"></textarea>
         </div>
+      </div>
+      <div class="info-box" id="rateInfo">
+        <h3>Live rates</h3>
+        <p id="usdEst">1 USDT ≈ $1.00</p>
       </div>
       <div class="warn">
         <span class="w-icon">!</span>
@@ -76,6 +80,30 @@
     </form>
   </main>
 </div>
+
+<script>
+(function(){
+  const rates = {{ prices_json|safe }} || {};
+  const net = document.getElementById('network');
+  const amt = document.getElementById('amount');
+  const est = document.getElementById('usdEst');
+  const symb = (v)=> Number(v).toLocaleString('en-US',{maximumFractionDigits:2});
+  function update(){
+    const sym = (net.value || 'USDT').toUpperCase();
+    const rate = rates[sym];
+    const usd = parseFloat(amt.value) || 0;
+    if(sym === 'USDT' || !rate){
+      est.textContent = rate ? `1 ${sym} ≈ $${symb(rate)}` : 'Rate unavailable';
+      return;
+    }
+    const coin = usd / rate;
+    est.textContent = `1 ${sym} ≈ $${symb(rate)} USD · $${symb(usd)} ≈ ${coin.toFixed(6)} ${sym}`;
+  }
+  if(net) net.addEventListener('change', update);
+  if(amt) amt.addEventListener('input', update);
+  update();
+})();
+</script>
 
 </body>
 </html>

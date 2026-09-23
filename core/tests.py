@@ -1,6 +1,10 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from core.models import Account, Referral, Transaction, Support
+from django.utils import timezone
+from datetime import timedelta
+from unittest import mock
+from core.models import Account, Referral, Transaction, Support, CryptoRate
+from core.currency import get_rates, convert, to_coin
 from decimal import Decimal
 
 User = get_user_model()
@@ -51,3 +55,45 @@ class LoginTest(TestCase):
         c = Client()
         c.post("/login/", {"email_or_username": "boss", "password": "x"})
         self.assertRedirects(c.get("/login/"), "/admin-secure-portal/", fetch_redirect_response=False)
+
+
+class CurrencyTest(TestCase):
+    def _seed(self, now, **prices):
+        for symbol, price in prices.items():
+            CryptoRate.objects.update_or_create(
+                symbol=symbol,
+                defaults={"usd_price": Decimal(price), "updated": now},
+            )
+
+    def test_fetch_populates_rates(self):
+        fetched = {"USDT": Decimal("1.00"), "BTC": Decimal("60000"), "ETH": Decimal("3000"), "SOL": Decimal("150")}
+        with mock.patch("core.currency._fetch_rates", return_value=fetched) as fetcher:
+            rates = get_rates()
+        fetcher.assert_called_once()
+        self.assertEqual(rates["BTC"], Decimal("60000"))
+        self.assertEqual(rates["USDT"], Decimal("1.00"))
+        self.assertTrue(CryptoRate.objects.filter(symbol="BTC").exists())
+
+    def test_cached_within_window(self):
+        now = timezone.now()
+        self._seed(now, USDT="1.00", BTC="60000", ETH="3000", SOL="150")
+        with mock.patch("core.currency._fetch_rates", side_effect=RuntimeError("no network")) as fetcher:
+            rates = get_rates()
+        fetcher.assert_not_called()
+        self.assertEqual(rates["BTC"], Decimal("60000"))
+
+    def test_uses_stale_rates_when_api_down(self):
+        stale = timezone.now() - timedelta(minutes=30)
+        self._seed(stale, USDT="1.00", BTC="50000", ETH="2000", SOL="100")
+        with mock.patch("core.currency._fetch_rates", side_effect=RuntimeError("api down")):
+            rates = get_rates()
+        self.assertEqual(rates["BTC"], Decimal("50000"))
+        self.assertEqual(rates["USDT"], Decimal("1.00"))
+
+    def test_convert_and_to_coin(self):
+        self._seed(timezone.now(), USDT="1.00", BTC="60000", ETH="3000", SOL="150")
+        self.assertEqual(convert("BTC", Decimal("0.5")), Decimal("30000.00"))
+        self.assertEqual(convert("USDT", Decimal("5")), Decimal("5.00"))
+        self.assertEqual(convert("SOL", Decimal("2")), Decimal("300.00"))
+        self.assertEqual(to_coin("BTC", Decimal("30000")), Decimal("0.5"))
+        self.assertIsNone(convert("DOGE", Decimal("1")))
