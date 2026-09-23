@@ -6,6 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EFXCAPITALS — Stock · Investment</title>
+<link rel="icon" type="image/svg+xml" href="{% static "images/favicon.svg" %}">
 <link rel="stylesheet" href="{% static "css/style.css" %}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
@@ -103,12 +104,6 @@
         <div class="meta-item"><b>0</b><span>Discounts</span></div>
       </div>
       <hr>
-      <h4>Plan Highlights</h4>
-      <ul class="fc-highlights">
-        <li><span><em>Oil</em> 30 days · 30 cycles</span><b>6.7%</b></li>
-        <li><span><em>Gas</em> 30 days · 30 cycles</span><b>6.7%</b></li>
-        <li><span><em>Gold</em> 50 days · 50 cycles</span><b>4%</b></li>
-      </ul>
       <div class="fc-foot">
         <span>Top Return Package <b>6.7%</b></span>
         <a href="#" class="wa-link">WhatsApp Support<br>0356589</a>
@@ -199,7 +194,7 @@
     <div class="section-head">
       <span class="eyebrow">Investment Plans</span>
       <h2>Choose your growth plan</h2>
-      <p>This section now renders your actual package records. When you add or edit packages in admin, they update here automatically.</p>
+      {% comment %} <p>This section now renders your actual package records. When you add or edit packages in admin, they update here automatically.</p> {% endcomment %}
       <span class="badge-live">Featured</span>
     </div>
     <div class="plans-grid">
