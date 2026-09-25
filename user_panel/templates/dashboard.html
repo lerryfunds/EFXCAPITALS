@@ -69,7 +69,7 @@
         <h3>Market Rates</h3>
         <span class="tag green">Live · 5 min cache</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+      <div class="market-grid">
         <div class="info-chip" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13.5px;color:var(--muted)">
           <b style="display:block;color:var(--text);font-family:var(--head);font-size:17px;margin-bottom:4px">USDT</b>
           {% if prices.USDT %}${{ prices.USDT|floatformat:2 }}{% else %}—{% endif %}
@@ -94,7 +94,7 @@
         <h3>Quick Overview</h3>
         <a href="{% url "investments" %}">My Investments →</a>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div class="overview-grid">
         <a href="{% url "investments" %}" class="info-chip" style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13.5px;color:var(--muted);transition:all .2s;display:block">
           <b style="display:block;color:var(--text);font-family:var(--head);font-size:17px;margin-bottom:4px">{{ active_investment_count }} Active Packages</b>
           ${{ invested_sum }} invested

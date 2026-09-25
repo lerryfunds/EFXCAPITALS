@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <div class="panel" style="padding:8px 24px">
+    <div class="panel table-panel">
       {% for log in logs %}
       <div class="log-item">
         <span class="l-dot {% if 'Reject' in log.action or 'Deleted' in log.action or 'error' in log.action|lower %}danger{% elif 'Approved' in log.action or 'Created' in log.action %}success{% else %}info{% endif %}"></span>

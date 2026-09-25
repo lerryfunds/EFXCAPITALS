@@ -65,7 +65,7 @@
       <div class="inv-row">
         <div class="inv-name"><b>Cycle progress</b><span>Cycle {{package.days}} of {{package.effective_cycle}} · {{package.effective_interval}}h interval</span></div>
         <div>
-          <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)"><span>{{package.parse_progress}}% complete</span><span>{{package.cycles_left}} cycles left</span></div>
+          <div class="cycle-progress-meta"><span>{{package.parse_progress}}% complete</span><span>{{package.cycles_left}} cycles left</span></div>
           <div class="progress"><div class="progress-bar" style="width:{{package.parse_progress}}%"></div></div>
         </div>
         <div class="inv-nums"><b>ROI {{package.effective_roi}}%/cycle</b><span>Next payout: +${{package.perCycle}}</span></div>
