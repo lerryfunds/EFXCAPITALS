@@ -50,12 +50,12 @@
       <div class="activation-box" id="step1">
         <div class="panel" style="margin:0;background:var(--bg)">
           <div class="amount-input">
-            <label for="amount">Investment amount (USDT)</label>
+            <label for="amount">Investment amount</label>
             <div class="input-icon">
               <span class="in-sym">$</span>
               <form action="{% url "package-activate" package.id %}" id="package-create-form" method="post">
                 {% csrf_token %}
-                <input id="amount" type="number" min="1" step="0.01" placeholder="Enter amount" name=amount>
+                <input id="amount" type="number" min="{{ package.min_amount }}" max="{{ package.max_amount }}" step="0.01" placeholder="Enter amount" name="amount">
               </form>
             </div>
             <div class="minmax">
@@ -143,35 +143,33 @@
 </div>
 
 <script>
-const WALLET = {{account.balance}};
-{% comment %} const PLANS = {
-  oil:    {name:'Oil Package', sub:'Crude oil',  roi:0.067, min:20,    max:500,   cycles:30, dur:'30 days'},
-  gas:    {name:'Gas Package', sub:'LPG Gas',    roi:0.067, min:500,   max:1000,  cycles:30, dur:'30 days'},
-  gold:   {name:'Gold Package',sub:'Gold',       roi:0.04,  min:800,   max:5000,  cycles:50, dur:'50 days'},
-  crypto: {name:'Crypto Package', sub:'Cryptocurrency', roi:0.067, min:5000,  max:10000, cycles:30, dur:'30 days'},
-  premium:{name:'Premium Package', sub:'Investor', roi:0.067, min:10000, max:100000, cycles:30, dur:'30 days'}
+const WALLET = Number("{{ account.balance|default:0|floatformat:2|escapejs }}");
+const PACKAGE = {
+  name: "{{ package.name|escapejs }}",
+  roi: Number("{{ package.roi|default:0|floatformat:2|escapejs }}"),
+  min: Number("{{ package.min_amount|default:0|floatformat:2|escapejs }}"),
+  max: Number("{{ package.max_amount|default:0|floatformat:2|escapejs }}"),
+  cycles: Number("{{ package.cycle|default:0|escapejs }}"),
+  duration: Number("{{ package.duration|default:0|escapejs }}"),
+  interval: Number("{{ package.interval|default:0|escapejs }}")
 };
-const query = new URLSearchParams(location.search);
-const planKey = PLANS[query.get('plan')] ? query.get('plan') : 'oil';
-const P = PLANS[planKey]; {% endcomment %}
+const fmt = n => '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 
-const fmt = n => '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-document.getElementById('pageTitle').textContent = 'Activate ' + "{{package.name}}";
-document.getElementById('planName').textContent = "{{package.name}}";
-document.getElementById('planRoiTag').textContent = (P.roi*100).toFixed(1) + '% / cycle';
-document.getElementById('overviewTitle').textContent = P.name + ' · ' + P.cycles + ' cycles';
-document.getElementById('ovDur').textContent = P.dur;
-document.getElementById('ovCycles').textContent = P.cycles + ' cycles';
-document.getElementById('ovInt').textContent = '24 hours';
-document.getElementById('minVal').textContent = fmt(P.min);
-document.getElementById('maxVal').textContent = fmt(P.max);
+document.getElementById('pageTitle').textContent = 'Activate ' + PACKAGE.name;
+document.getElementById('planName').textContent = PACKAGE.name;
+document.getElementById('planRoiTag').textContent = PACKAGE.roi.toFixed(1) + '% / cycle';
+document.getElementById('overviewTitle').textContent = PACKAGE.name + ' · ' + PACKAGE.cycles + ' cycles';
+document.getElementById('ovDur').textContent = PACKAGE.duration + ' days';
+document.getElementById('ovCycles').textContent = PACKAGE.cycles + ' cycles';
+document.getElementById('ovInt').textContent = PACKAGE.interval + ' hours';
+document.getElementById('minVal').textContent = fmt(PACKAGE.min);
+document.getElementById('maxVal').textContent = fmt(PACKAGE.max);
 document.getElementById('walletBal').textContent = fmt(WALLET);
-document.getElementById('walletTag').textContent = 'Wallet: ' + fmt(WALLET); 
+document.getElementById('walletTag').textContent = 'Wallet: ' + fmt(WALLET);
 
 document.getElementById('useMax').addEventListener('click', e => {
   e.preventDefault();
-  document.getElementById('amount').value = Math.min({{package.max_amount}}).toFixed(2);
+  document.getElementById('amount').value = Math.min(PACKAGE.max, WALLET).toFixed(2);
 });
 
 document.getElementById('amount').addEventListener('input', () => {
@@ -184,8 +182,7 @@ function getAmount(){
   return v;
 }
 function validate(v){
-  if (isNaN(v) || v < {{package.min_amount}} || v > {{package.max_amount}} || v > {{account.balance}}) return false;
-  return true;
+  return v !== null && !isNaN(v) && v >= PACKAGE.min && v <= PACKAGE.max && v <= WALLET;
 }
 
 function setStep(n){
@@ -207,14 +204,14 @@ function goReview(){
     document.getElementById('errMsg').classList.add('show');
     return;
   }
-  const perCycle = v * {{package.roi}};
-  const profit = perCycle * {{package.cycle}};
-  document.getElementById('revName').textContent = "{{package.name}}";
+  const perCycle = v * PACKAGE.roi / 100;
+  const profit = perCycle * PACKAGE.cycles;
+  document.getElementById('revName').textContent = PACKAGE.name;
   document.getElementById('revAmount').textContent = fmt(v);
-  document.getElementById('revRoi').textContent = ({{package.roi}}).toFixed(1) + '%';
-  document.getElementById('revCycles').textContent = {{package.cycle}};
-  document.getElementById('revDur').textContent = {{package.duration}};
-  document.getElementById('revRemain').textContent = fmt({{account.balance}} - v);
+  document.getElementById('revRoi').textContent = PACKAGE.roi.toFixed(1) + '%';
+  document.getElementById('revCycles').textContent = PACKAGE.cycles;
+  document.getElementById('revDur').textContent = PACKAGE.duration + ' days';
+  document.getElementById('revRemain').textContent = fmt(WALLET - v);
   document.getElementById('revTotal').textContent = fmt(v + profit);
   document.getElementById('bdCapital').textContent = fmt(v);
   document.getElementById('bdProfit').textContent = fmt(profit);
@@ -229,16 +226,7 @@ function backToAmount(){
 }
 
 function confirmActivate(){
-  `  const v = getAmount();
-  const perCycle = v * P.roi;
-  const profit = perCycle * P.cycles;
-  ['okName','okName2'].forEach(id => document.getElementById(id).textContent = "{{package.name}}");
-  document.getElementById('okAmount').textContent = fmt(v);
-  document.getElementById('okCycles').textContent = P.cycles;
-  document.getElementById('okTotal').textContent = fmt(v + profit);
-  setStep(3);`
-
-  document.getElementById("package-create-form").submit()
+  document.getElementById('package-create-form').submit();
 }
 </script>
 

@@ -46,8 +46,14 @@
               <td>
                 {% if deposit.status == "PENDING" %}
                 <div class="act-row">
-                  <a href="{% url "approve_deposit" deposit.id %}" class="act-btn green" title="Approve & Credit">✓ Approve</a>
-                  <a href="{% url "reject_deposit" deposit.id %}" class="act-btn danger" title="Reject">✕</a>
+                  <form method="post" action="{% url "approve_deposit" deposit.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="act-btn green" title="Approve & Credit">✓ Approve</button>
+                  </form>
+                  <form method="post" action="{% url "reject_deposit" deposit.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="act-btn danger" title="Reject">✕</button>
+                  </form>
                 </div>
                 {% endif %}
               </td>

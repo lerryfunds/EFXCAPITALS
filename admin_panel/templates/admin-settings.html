@@ -38,15 +38,16 @@
         <div class="field">
           <label for="wtype">Wallet Type</label>
           <select id="wtype" name="wallet-type">
-            <option value="USDT" {% if platform.wallet_type == "USDT" %}selected{% endif %}>USDT</option>
-            <option value="BTC" {% if platform.wallet_type == "BTC" %}selected{% endif %}>BTC</option>
-            <option value="ETH" {% if platform.wallet_type == "ETH" %}selected{% endif %}>ETH</option>
-            <option value="SOL" {% if platform.wallet_type == "SOL" %}selected{% endif %}>SOL</option>
+            <option value="{{ platform.wallet_type }}" selected>{{ platform.wallet_type }}</option>
+            {% if platform.wallet_type != "USDT" %}<option value="USDT">USDT</option>{% endif %}
+            {% if platform.wallet_type != "BTC" %}<option value="BTC">BTC</option>{% endif %}
+            {% if platform.wallet_type != "ETH" %}<option value="ETH">ETH</option>{% endif %}
+            {% if platform.wallet_type != "SOL" %}<option value="SOL">SOL</option>{% endif %}
           </select>
         </div>
         <div class="field full">
           <label for="waddress">Wallet Address</label>
-          <input id="waddress" type="text" placeholder="Enter the USDT receive address" required name="wallet-address" value="{{platform.wallet_address}}">
+          <input id="waddress" type="text" maxlength="150" placeholder="Enter the {{ platform.wallet_type }} receive address" required name="wallet-address" value="{{platform.wallet_address}}">
         </div>
       </div>
 

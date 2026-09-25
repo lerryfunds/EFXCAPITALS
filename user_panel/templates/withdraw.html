@@ -21,7 +21,7 @@
     <div class="page-head">
       <div>
         <h1>Withdraw Funds</h1>
-        <p>Request a withdrawal to your USDT wallet — tracked and proof-backed.</p>
+        <p>Request a withdrawal to your {{ platform_wallet_type }} wallet — tracked with a reviewable transaction record.</p>
       </div>
       <span class="tag gold">Available: ${{account.balance}}</span>
     </div>
@@ -35,7 +35,7 @@
     <div class="info-box">
       <h3>Withdrawal rules</h3>
       <ol>
-        <li>Minimum withdrawal is <b>$20.00</b>. No maximum limit.</li>
+        <li>Minimum withdrawal is <b>$20.00</b> and cannot exceed your available balance.</li>
         <li>Withdrawals are reviewed by admin and processed on your selected network.</li>
         <li>Always double-check your wallet address — mistakes cannot be reversed.</li>
       </ol>
@@ -47,14 +47,11 @@
         <div class="field">
           <label for="network">Network</label>
           <select id="network" name="wallet_type">
-            <option>USDT</option>
-            <option>ETH</option>
-            <option>BTC</option>
-            <option>SOL</option>
+            <option value="{{ platform_wallet_type }}" selected>{{ platform_wallet_type }}</option>
           </select>
         </div>
         <div class="field">
-          <label for="amount">Amount (USDT)</label>
+          <label for="amount">Amount ({{ platform_wallet_type }})</label>
           <div class="input-icon">
             <span class="in-sym">$</span>
             <input id="amount" type="number" placeholder="100.00" min="20" step="0.01" required name="amount">
@@ -62,11 +59,11 @@
         </div>
         <div class="field full">
           <label for="address">Network Address</label>
-          <input id="address" name="address" type="text" placeholder="Your wallet address on the selected network" required>
+          <input id="address" name="address" type="text" maxlength="150" placeholder="Your wallet address on the selected network" required>
         </div>
         <div class="field full">
           <label for="note">Note <small>(optional)</small></label>
-          <textarea id="note" name="description" placeholder="Describe this withdraw requ>est"></textarea>
+          <textarea id="note" name="description" placeholder="Describe this withdrawal request"></textarea>
         </div>
       </div>
       <div class="info-box" id="rateInfo">

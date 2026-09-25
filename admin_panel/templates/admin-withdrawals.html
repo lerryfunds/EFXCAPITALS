@@ -56,8 +56,14 @@
               <td>
                 {% if withdrawal.status == "PENDING" %}
                 <div class="act-row">
-                  <a href="{% url "approve_withdrawals" withdrawal.id %}" class="act-btn green" title="Approve">✓ Approve</a>
-                  <a href="{% url "reject_withdrawals" withdrawal.id %}" class="act-btn danger" title="Reject">✕</a>
+                  <form method="post" action="{% url "approve_withdrawals" withdrawal.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="act-btn green" title="Approve">✓ Approve</button>
+                  </form>
+                  <form method="post" action="{% url "reject_withdrawals" withdrawal.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="act-btn danger" title="Reject">✕</button>
+                  </form>
                 </div>
                 {% else %}
                 <div class="act-row">

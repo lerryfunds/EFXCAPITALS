@@ -49,7 +49,7 @@
       <span class="tick"><b>BTC</b> <em>{% if prices.BTC %}${{ prices.BTC|floatformat:0 }}{% endif %}</em></span>
       <span class="tick"><b>ETH</b> <em>{% if prices.ETH %}${{ prices.ETH|floatformat:0 }}{% endif %}</em></span>
       <span class="tick"><b>SOL</b> <em>{% if prices.SOL %}${{ prices.SOL|floatformat:2 }}{% endif %}</em></span>
-      <span class="tick"><b>Live Packages</b> <em>{{ active_packages|length }}</em></span>
+      <span class="tick"><b>Live Packages</b> <em>{{ active_package_count }}</em></span>
       <span class="tick"><b>Secure Dashboard</b> <em>24/7</em></span>
       <span class="tick"><b>Withdrawals</b> <em>Tracked</em></span>
       <span class="tick"><b>WhatsApp Support</b> <em>Online</em></span>
@@ -59,7 +59,7 @@
       <span class="tick"><b>BTC</b> <em>{% if prices.BTC %}${{ prices.BTC|floatformat:0 }}{% endif %}</em></span>
       <span class="tick"><b>ETH</b> <em>{% if prices.ETH %}${{ prices.ETH|floatformat:0 }}{% endif %}</em></span>
       <span class="tick"><b>SOL</b> <em>{% if prices.SOL %}${{ prices.SOL|floatformat:2 }}{% endif %}</em></span>
-      <span class="tick"><b>Live Packages</b> <em>{{ active_packages|length }}</em></span>
+      <span class="tick"><b>Live Packages</b> <em>{{ active_package_count }}</em></span>
       <span class="tick"><b>Secure Dashboard</b> <em>24/7</em></span>
       <span class="tick"><b>Withdrawals</b> <em>Tracked</em></span>
       <span class="tick"><b>WhatsApp Support</b> <em>Online</em></span>
@@ -75,17 +75,17 @@
       <h1>Your Money <br> Your Growth <br> Your Future</h1>
       <p>
         EFXCAPITALS connects your users to structured investment
-        packages with daily tracked profits, wallet-based funding, and clean
-        USDT-focused workflows across web and mobile.
+        packages with interval-based tracked profits, wallet-based funding, and clean
+        focused workflows across web and mobile.
       </p>
       <div class="hero-actions">
-        <a href="{% url "register" %}" class="btn btn-gold btn-lg">Start Earning Now <span class="arrow">→</span></a>
+        <a href="{% url "register" %}" class="btn btn-gold btn-lg">{% if active_package_count %}Start Earning Now{% else %}Create Free Account{% endif %} <span class="arrow">→</span></a>
         <a href="{% url "login" %}" class="btn btn-ghost btn-lg"><span class="play">▶</span> Monitor Account</a>
       </div>
       <div class="hero-stats">
-        <div class="stat"><b>5</b><span>Live Packages</span></div>
-        <div class="stat"><b>$100</b><span>Starting Amount</span></div>
-        <div class="stat"><b>6.7%</b><span>Top ROI</span></div>
+        <div class="stat"><b>{{ active_package_count }}</b><span>Live Packages</span></div>
+        <div class="stat"><b>{% if active_package_count %}${{ minimum_amount|floatformat:0 }}{% else %}—{% endif %}</b><span>Starting Amount</span></div>
+        <div class="stat"><b>{% if active_package_count %}{{ top_roi|floatformat:2 }}%{% else %}—{% endif %}</b><span>Top ROI</span></div>
         <div class="stat"><b>24/7</b><span>Support Access</span></div>
       </div>
     </div>
@@ -93,21 +93,25 @@
     <aside class="featured-card">
       <div class="fc-head">
         <span class="badge-soft">EFXCAPITALS</span>
-        <span class="badge-featured">Featured</span>
+        <span class="badge-featured">{% if featured_package %}Featured{% else %}Unavailable{% endif %}</span>
       </div>
-      <h3>Featured Plan Entry</h3>
-      <div class="fc-price">$100.00 <small>USDT · Package activation</small></div>
-      <div class="fc-roi">Best ROI <b>6.7%</b></div>
-      <div class="fc-meta">
-        <div class="meta-item"><b>5</b><span>Plans</span></div>
-        <div class="meta-item"><b>34d</b><span>Avg Duration</span></div>
-        <div class="meta-item"><b>0</b><span>Discounts</span></div>
-      </div>
-      <hr>
-      <div class="fc-foot">
-        <span>Top Return Package <b>6.7%</b></span>
-        <a href="#" class="wa-link">WhatsApp Support<br>0356589</a>
-      </div>
+      {% if featured_package %}
+        <h3>{{ featured_package.name }}</h3>
+        <div class="fc-price">${{ featured_package.min_amount|floatformat:2 }} <small>Package activation</small></div>
+        <div class="fc-roi">ROI <b>{{ featured_package.roi|floatformat:2 }}%</b></div>
+        <div class="fc-meta">
+          <div class="meta-item"><b>{{ featured_package.cycle }}</b><span>Cycles</span></div>
+          <div class="meta-item"><b>{{ featured_package.duration }}d</b><span>Duration</span></div>
+          <div class="meta-item"><b>{{ featured_package.interval }}h</b><span>Interval</span></div>
+        </div>
+        <hr>
+        <div class="fc-foot">
+          <span>{{ featured_package.subtype }} <b>{{ featured_package.roi|floatformat:2 }}% ROI</b></span>
+        </div>
+      {% else %}
+        <h3>No Featured Package</h3>
+        <p>{% if active_package_count %}No package is currently marked as featured.{% else %}No investment packages are currently available. Please check back soon.{% endif %}</p>
+      {% endif %}
     </aside>
   </div>
 </section>
@@ -128,7 +132,7 @@
       </div>
       <div class="feature-card">
         <span class="f-icon">⟁</span>
-        <h3>USDT Deposit Workflow</h3>
+        <h3>Configured Deposit Workflow</h3>
         <p>Users can submit deposits with transaction hash and proof, while admin can review, approve, reject, and keep the evidence visible on both sides.</p>
       </div>
       <div class="feature-card">
@@ -171,8 +175,8 @@
       </div>
       <div class="step">
         <span class="step-num">2</span>
-        <h3>Deposit USDT</h3>
-        <p>Submit a deposit request with network, transaction hash, amount, and screenshot proof.</p>
+        <h3>Deposit</h3>
+            <p>Submit a deposit request with the configured network, transaction hash, and amount.</p>
       </div>
       <div class="step">
         <span class="step-num">3</span>
@@ -182,7 +186,7 @@
       <div class="step">
         <span class="step-num">4</span>
         <h3>Track &amp; Withdraw</h3>
-        <p>Monitor wallet balance, profit releases, transaction history, and proof-backed withdrawals from one place.</p>
+        <p>Monitor wallet balance, profit releases, transaction history, and withdrawals from one place.</p>
       </div>
     </div>
   </div>
@@ -195,7 +199,7 @@
       <span class="eyebrow">Investment Plans</span>
       <h2>Choose your growth plan</h2>
       {% comment %} <p>This section now renders your actual package records. When you add or edit packages in admin, they update here automatically.</p> {% endcomment %}
-      <span class="badge-live">Featured</span>
+      <span class="badge-live">{% if featured_package %}Featured{% elif active_package_count %}Live Plans{% else %}No Packages{% endif %}</span>
     </div>
     <div class="plans-grid">
 
@@ -203,13 +207,18 @@
         <article class="plan-card {% if package.is_featured %}featured-plan{% endif %}">
           {% if package.is_featured %}<span class="plan-badge">Featured</span>{% endif %}
           <h3>{{package.name}}</h3>
-          <div class="plan-roi">6.7% <small>/cycle ROI</small></div>
+          <div class="plan-roi">{{package.roi|floatformat:2}}% <small>/cycle ROI</small></div>
           <p class="plan-sub">{{package.subtype}}</p>
           <p class="plan-desc">{{package.description}}</p>
           <div class="plan-range">Minimum: ${{package.min_amount}} <span>|</span> Maximum: ${{package.max_amount}}</div>
           {% if package.is_featured %}<a href="{% url "login" %}" class="btn btn-gold">Invest Now</a>{% else %}<a href="{% url "register" %}" class="btn btn-outline">Get Started</a>{% endif %}
         </article>
 
+      {% empty %}
+        <article class="plan-card">
+          <h3>No packages available</h3>
+          <p class="plan-desc">Investment packages are not currently available. Please check back soon.</p>
+        </article>
       {% endfor %}
       
       {% comment %} <article class="plan-card">
@@ -242,12 +251,12 @@
       <span class="eyebrow">FAQ</span>
       <h2>Frequently Asked Questions</h2>
       <div class="faq-stats">
-        <div class="stat"><b>5</b><span>Active Packages</span></div>
-        <div class="stat"><b>100</b><span>Minimum Entry</span></div>
-        <div class="stat"><b>34d</b><span>Average Duration</span></div>
-        <div class="stat"><b>0</b><span>Discounted Plans</span></div>
+        <div class="stat"><b>{{ active_package_count }}</b><span>Active Packages</span></div>
+        <div class="stat"><b>{% if active_package_count %}${{ minimum_amount|floatformat:0 }}{% else %}—{% endif %}</b><span>Minimum Entry</span></div>
+        <div class="stat"><b>{% if active_package_count %}{{ average_duration|floatformat:0 }}d{% else %}—{% endif %}</b><span>Average Duration</span></div>
+        <div class="stat"><b>—</b><span>Discounted Plans</span></div>
       </div>
-      <div class="usdt-note">₮ <b>Powered by USDT</b> <span>Deposit, profit, and withdrawal workflows are built around stablecoin handling.</span></div>
+      {% comment %} <div class="usdt-note">₮ <b>Powered by USDT</b> <span>Deposit, profit, and withdrawal workflows are built around stablecoin handling.</span></div> {% endcomment %}
     </div>
     <div class="faq-list">
       <details>
@@ -256,7 +265,7 @@
       </details>
       <details>
         <summary>How do proof uploads work?</summary>
-        <p>Deposits and withdrawals accept screenshot proof along with transaction details, and the evidence stays visible to both user and admin.</p>
+            <p>Deposits and withdrawals retain transaction records and review history for both users and administrators.</p>
       </details>
       <details>
         <summary>Where do users contact support?</summary>
@@ -282,8 +291,8 @@
       </div>
       <div class="privacy-card">
         <span class="p-icon">⌁</span>
-        <h3>Proof-Based Operations</h3>
-        <p>Deposits and withdrawals include file-backed verification paths so operational actions are easier to validate later.</p>
+          <h3>Review-Based Operations</h3>
+          <p>Deposits and withdrawals retain reviewable transaction records so operational actions are easier to validate later.</p>
       </div>
       <div class="privacy-card">
         <span class="p-icon">▤</span>
@@ -317,9 +326,9 @@
         <span class="brand-text">EFX<b>CAPITALS</b></span>
       </a>
       <!-- <p>Oil · Gas · Investment</p> -->
-      <p>A focused investment platform with package management, wallet workflows, proof-backed transactions, and user-friendly controls across web and mobile.</p>
+      <p>A focused investment platform with package management, wallet workflows, transaction records, and user-friendly controls across web and mobile.</p>
       <div class="footer-badges">
-        <span class="chip">₮ Powered by USDT</span>
+        {% comment %} <span class="chip">₮ Powered by USDT</span> {% endcomment %}
         <span class="chip">EX Powered by EFXCAPITALS</span>
       </div>
     </div>

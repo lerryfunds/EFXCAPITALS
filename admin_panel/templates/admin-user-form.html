@@ -66,17 +66,14 @@
           <label for="balance">Wallet Type</label>
           <div class="input-icon">
             <select name="wallet-type" id="wallet-type" style="width: 100%;">
-              <option value="USDT" disabled>USDT</option>
-              <option value="BTC">BTC</option>
-              <option value="ETH">ETH</option>
-              <option value="SOL">SOL</option>
+              <option value="{{ platform.wallet_type }}" selected>{{ platform.wallet_type }}</option>
             </select>
           </div>
         </div>
         <div class="field">
           <label for="balance">Wallet Address</label>
           <div class="input-icon">
-            <input id="address" type="text" placeholder="Enter yoru wallet address" name="address">
+            <input id="address" type="text" maxlength="150" placeholder="Enter your wallet address" name="address">
           </div>
         </div>
       {% endif %}

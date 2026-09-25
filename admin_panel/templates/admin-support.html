@@ -76,10 +76,16 @@
                     data-message="{{ support.message }}"
                     title="View full message">View</button>
                   {% if support.status != "REPLIED" %}
-                    <a href="{% url "support_mark_replied" support.id %}" class="act-btn green" title="Mark as replied">✎</a>
+                    <form method="post" action="{% url "support_mark_replied" support.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="act-btn green" title="Mark as replied">✎</button>
+                    </form>
                   {% endif %}
                   {% if support.status == "UNREAD" %}
-                    <a href="{% url "support_mark_read" support.id %}" class="act-btn" title="Mark as read">✓</a>
+                    <form method="post" action="{% url "support_mark_read" support.id %}">
+                      {% csrf_token %}
+                      <button type="submit" class="act-btn" title="Mark as read">✓</button>
+                    </form>
                   {% endif %}
                 </div>
               </td>

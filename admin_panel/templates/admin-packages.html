@@ -57,14 +57,19 @@
                 <td>{{package.roi}}% /cycle</td>
                 <td class="mono">${{package.min_amount}} · ${{package.max_amount}}</td>
                 <td>{{package.cycle}} · {{package.duration}}d</td>
-                <td><a href="{% url 'toggle_package_active' package.id %}"><button class="toggle {% if package.is_active == True %}on {% else %} off {% endif %}" title="Deactivate"></button></a></td>
-                <td>
-                  <div class="act-row">
-                    <a href="{% url "package_edit" package.id %}" class="act-btn" title="Edit">✎</a>
-                    <form method="post" action="{% url "package_delete" package.id %}" id="form-{{package.id}}">
-                      {% csrf_token %}
-                      <button class="act-btn del-btn danger" title="Delete" id="{{package.id}}">🗑</button>
-                    </form>
+                 <td>
+                   <form method="post" action="{% url "toggle_package_active" package.id %}">
+                     {% csrf_token %}
+                     <button type="submit" class="toggle {% if package.is_active == True %}on {% else %} off {% endif %}" title="Deactivate"></button>
+                   </form>
+                 </td>
+                 <td>
+                   <div class="act-row">
+                     <a href="{% url "package_edit" package.id %}" class="act-btn" title="Edit">✎</a>
+                     <form class="del-form" method="post" action="{% url "package_delete" package.id %}" id="form-{{package.id}}">
+                       {% csrf_token %}
+                       <button type="submit" class="act-btn del-btn danger" title="Delete" id="{{package.id}}">🗑</button>
+                     </form>
                   </div>
                 </td>
               </tr>
@@ -92,7 +97,7 @@
 
   let targetId = null;
 
-  document.querySelectorAll("form").forEach(form => {
+  document.querySelectorAll(".del-form").forEach(form => {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
     });

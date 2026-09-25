@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deposit USDT — EFXCAPITALS</title>
+<title>Deposit {{ platform_wallet_type }} — EFXCAPITALS</title>
 <link rel="icon" type="image/svg+xml" href="{% static "images/favicon.svg" %}">
 <link rel="stylesheet" href="{% static "css/style.css" %}">
 <link rel="stylesheet" href="{% static "css/app.css" %}">
@@ -20,8 +20,8 @@
   <main class="content">
     <div class="page-head">
       <div>
-        <h1>Deposit USDT</h1>
-        <p>Fund your wallet with USDT — funds are credited after admin approval.</p>
+        <h1>Deposit {{ platform_wallet_type }}</h1>
+        <p>Fund your wallet with {{ platform_wallet_type }} — funds are credited after admin approval.</p>
       </div>
       <span class="tag gold">Wallet: ${{account.balance}}</span>
     </div>
@@ -36,7 +36,7 @@
       <h3>How to deposit</h3>
       <ol>
         <li>Select a network and copy the deposit address below.</li>
-        <li>Send USDT from your wallet or exchange to that address.</li>
+        <li>Send {{ platform_wallet_type }} from your wallet or exchange to that address.</li>
         <li>Paste the transaction hash (TXID) in the form and submit.</li>
         <li>Admin reviews and your balance is credited once approved.</li>
       </ol>
@@ -54,14 +54,11 @@
         <div class="field">
           <label for="network">Network</label>
           <select id="network" name="wallet_type">
-            <option>USDT</option>
-            <option>ETH</option>
-            <option>BTC</option>
-            <option>SOL</option>
+            <option value="{{ platform_wallet_type }}" selected>{{ platform_wallet_type }}</option>
           </select>
         </div>
         <div class="field">
-          <label for="amount">Amount (USDT)</label>
+          <label for="amount">Amount ({{ platform_wallet_type }})</label>
           <div class="input-icon">
             <span class="in-sym">$</span>
             <input id="amount" type="number" placeholder="100.00" min="1" step="0.01" required name="amount">
@@ -77,8 +74,8 @@
         <p id="usdEst">1 USDT ≈ $1.00</p>
       </div>
       <div class="warn">
-        <span class="w-icon">!</span>
-        <span>Only send <b>USDT</b> on the selected network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
+          <span class="w-icon">!</span>
+        <span>Only send <b>{{ platform_wallet_type }}</b> on the selected network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
       </div>
       <button type="submit" class="btn btn-gold btn-block">Submit Deposit</button>
     </form>

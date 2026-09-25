@@ -68,7 +68,7 @@
         </div>
         <div class="field">
           <label for="interval">Cycle Interval (hours)</label>
-          <input id="interval" type="number" min="1" value="24" name="interval" value="{{package_interval}}">
+            <input id="interval" type="number" min="1" name="interval" value="{{package_interval|default:24}}">
         </div>
       </div>
 

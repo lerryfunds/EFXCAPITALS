@@ -43,27 +43,24 @@
       <div class="form-grid">
         <div class="field">
           <label for="fname">Full Name</label>
-          <input id="fname" type="text" placeholder="John Carter" required name="full_name">
+          <input id="fname" type="text" maxlength="300" placeholder="John Carter" required name="full_name">
         </div>
         <div class="field">
           <label for="username">Username</label>
-          <input id="username" type="text" placeholder="johndoe" required name="username">
+          <input id="username" type="text" maxlength="150" placeholder="johndoe" required name="username">
         </div>
         <div class="field full">
           <label for="email">Email Address</label>
-          <input id="email" type="email" placeholder="you@example.com" required name="email">
+          <input id="email" type="email" maxlength="254" placeholder="you@example.com" required name="email">
         </div>
         <div class="field">
           <label for="email">Wallet Address</label>
-          <input id="email" type="text" placeholder="Enter your wallet address" required name="address">
+          <input id="email" type="text" maxlength="150" placeholder="Enter your wallet address" required name="address">
         </div>
         <div class="field">
           <label for="email">Wallet Type</label>
           <select name="wallet-type" id="wallet-type">
-            <option value="USDT">USDT</option>
-            <option value="BTC">BTC</option>
-            <option value="ETH">ETH</option>
-            <option value="SOL">SOL</option>
+            <option value="{{ platform.wallet_type }}" selected>{{ platform.wallet_type }}</option>
           </select>
         </div>
         {% comment %} <div class="field">
@@ -72,7 +69,7 @@
         </div> {% endcomment %}
         <div class="field">
           <label for="phone">WhatsApp Number</label>
-          <input id="phone" type="tel" placeholder="+1 555 000 1234" name="whatsapp-number">
+          <input id="phone" type="tel" maxlength="30" placeholder="+1 555 000 1234" name="whatsapp-number">
         </div>
         <div class="field">
           <label for="password">Password</label>

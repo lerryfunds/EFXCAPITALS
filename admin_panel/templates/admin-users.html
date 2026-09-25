@@ -22,7 +22,7 @@
     <div class="page-head">
       <div>
         <h1>Users</h1>
-        <p>Create, edit, disable (deactivate), or delete user accounts.</p>
+        <p>Create, edit, or deactivate user accounts while preserving financial history.</p>
         {% for message in messages %}
           {{message}}
         {% endfor %}
@@ -62,13 +62,19 @@
                     <div class="act-row">
                       <a href="{% url "user_edit" user.user.user_id %}" class="act-btn" title="Edit">✎</a>
                       {% if user.user.is_active %}
-                        <a href="{% url "user_toggle_activity" user.user.user_id %}" class="act-btn red" title="Disable">X</a>
+                        <form method="post" action="{% url "user_toggle_activity" user.user.user_id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="act-btn red" title="Disable">X</button>
+                        </form>
                       {% else %}
-                        <a href="{% url "user_toggle_activity" user.user.user_id %}" class="act-btn green" title="Enable">✓</a>
+                        <form method="post" action="{% url "user_toggle_activity" user.user.user_id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="act-btn green" title="Enable">✓</button>
+                        </form>
                       {% endif %}
-                      <form action="{% url "user_delete" user.user.user_id %}" method="post" id="form-{{user.user.user_id}}">
+                      <form class="del-form" action="{% url "user_delete" user.user.user_id %}" method="post" id="form-{{user.user.user_id}}">
                         {% csrf_token %}
-                        <button class="act-btn danger del-btn" title="Delete" id="{{user.user.user_id}}">🗑</button>
+                         <button type="submit" class="act-btn danger del-btn" title="Deactivate" id="{{user.user.user_id}}">⊘</button>
                       </form>
                     </div>
                   </td>
@@ -84,11 +90,11 @@
 
 <div class="modal-bg" id="confirmDelUser">
   <div class="modal">
-    <h3>Delete user?</h3>
-    <p>This permanently removes <b id="delName">this user</b> and their account data. This cannot be undone.</p>
+    <h3>Deactivate user?</h3>
+    <p>This disables <b id="delName">this user</b> while preserving their account and financial history.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="closeDelUser">Cancel</button>
-      <button class="btn btn-gold" id="doDeleteUser" style="background:linear-gradient(135deg,#ff8a8a,#ff5d5d);box-shadow:0 8px 24px rgba(255,93,93,.25)">Delete User</button>
+      <button class="btn btn-gold" id="doDeleteUser" style="background:linear-gradient(135deg,#ff8a8a,#ff5d5d);box-shadow:0 8px 24px rgba(255,93,93,.25)">Deactivate User</button>
     </div>
   </div>
 </div>
@@ -99,7 +105,7 @@
 
   let targetId = null;
 
-  document.querySelectorAll("form").forEach(form => {
+  document.querySelectorAll(".del-form").forEach(form => {
     form.addEventListener("submit", (e) => {
       e.preventDefault();
     });

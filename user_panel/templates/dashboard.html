@@ -30,7 +30,7 @@
       <div class="w-card grad">
         <div class="w-top"><span class="w-label">Wallet Balance</span></div>
         <b>${{account.balance}}</b>
-        <div class="w-note">Available USDT{% if balance_coin %} · ≈ {{ balance_coin|floatformat:6 }} {{ account.account_type }}{% endif %}</div>
+        <div class="w-note">Available {{ account.account_type }}{% if balance_coin %} · ≈ {{ balance_coin|floatformat:6 }} {{ account.account_type }}{% endif %}</div>
       </div>
       {% comment %} <div class="w-card">
         <div class="w-top"><span class="w-label">Total Invested</span><span class="w-chip">Active</span></div>
@@ -52,7 +52,7 @@
     <div class="quick-row">
       <a href="{% url "deposit" %}" class="quick-card">
         <span class="dir">↓</span>
-        <span><b>Deposit USDT</b><em>Fund your wallet</em></span>
+        <span><b>Deposit Funds</b><em>Fund your wallet</em></span>
       </a>
       <a href="{% url "withdraw" %}" class="quick-card">
         <span class="dir">↑</span>
