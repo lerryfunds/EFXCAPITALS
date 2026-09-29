@@ -28,7 +28,7 @@ Five input classes the spec implies but no single flow's happy path exercises. E
 
 1. **Admin disables every rail.** `enabled_rails()` returns `[]`. The deposit and withdraw pages must render a clear "no networks available" state, and a crafted POST must be rejected — never a `TypeError` on `None` or an `IndexError` on `rails[0]`. *(Tasks 5, 6)*
 2. **CoinGecko is unreachable and the rail's symbol has no cached rate.** `coin_amount` returns `(None, None)`. The deposit must still succeed with `amount_coin=None` — a rate outage must never lock a user out of funding their account, and must never divide by `None`. *(Tasks 3, 5)*
-3. **A USD amount too small to express in the rail's coin quantizes to zero coins.** $0.10 on ETH (18 decimals, ~$3000/ETH) is 0.000000000000000033 ETH, which rounds to `0`. Recording a zero-coin deposit is meaningless for reconciliation, so it must be rejected with a message naming the minimum. *(Task 5)*
+3. **A rate far outside any sane band makes the coin amount fall below one quantum of the rail's decimals.** This is a *corrupt-rate* guard, not a small-amount guard: with 18 decimals and a realistic rate, no realistic USD amount rounds to zero ($0.10 at $3000/ETH is 0.0000333 ETH, comfortably representable). But a depegged stablecoin or a bad API response can produce a rate large enough that the coin amount quantizes to `0`. Recording a zero-coin deposit is meaningless for reconciliation, so it must be rejected with a message naming the minimum. Tests must use such an absurd rate at or above the rail's configured minimum, so the limit check cannot mask the assertion. *(Tasks 3, 5, 6)*
 4. **A crafted POST submits a disabled or unknown rail key.** The dropdown only offers enabled rails, but POST data is attacker-controlled. A disabled rail must be rejected at submit time even though it was valid when the page was rendered. *(Tasks 5, 6)*
 5. **A historical `LEGACY:<SYMBOL>` rail, whose key is absent from the catalog.** Every validator must return `False` rather than raising, and admin approval of a deposit on such a rail must still credit the balance. *(Tasks 2, 8)*
 
@@ -121,8 +121,9 @@ class RailValidationTest(TestCase):
         self.assertFalse(valid_txid("USDT:TRC20", "0x" + "a" * 64))
         self.assertTrue(valid_txid("ETH", "0x" + "A" * 64))
         self.assertFalse(valid_txid("ETH", "a" * 64))
-        self.assertTrue(valid_txid("BTC", "1" * 64))
+        self.assertTrue(valid_txid("BTC", "a" * 64))
         self.assertFalse(valid_txid("BTC", "0x" + "a" * 64))
+        self.assertFalse(valid_txid("BTC", "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"))
         self.assertTrue(valid_txid("SOL", "1" * 88))
 
     def test_validators_strip_surrounding_whitespace(self):
@@ -180,8 +181,8 @@ RAIL_CATALOG = {
         "label": "Bitcoin",
         "coin_id": "bitcoin",
         "coin_decimals": 8,
-        "address_re": r"^(bc1[02-9ac-hj-np-z]{11,71}|[13][1-9A-HJ-NP-Za-km-z]{25,34})$",
-        "txid_re": r"^[1-9A-HJ-NP-Za-km-z]{32,64}$",
+        "address_re": r"^(bc1[02-9ac-hj-np-z]{39,59}|[13][1-9A-HJ-NP-Za-km-z]{25,34})$",
+        "txid_re": r"^[0-9a-fA-F]{64}$",
         "min_deposit": "5.00",
         "max_deposit": "9999999999999999.99",
         "min_withdraw": "20.00",
@@ -207,7 +208,7 @@ RAIL_CATALOG = {
         "coin_id": "solana",
         "coin_decimals": 9,
         "address_re": r"^[1-9A-HJ-NP-Za-km-z]{32,44}$",
-        "txid_re": r"^[1-9A-HJ-NP-Za-km-z]{64,90}$",
+        "txid_re": r"^[1-9A-HJ-NP-Za-km-z]{87,88}$",
         "min_deposit": "5.00",
         "max_deposit": "9999999999999999.99",
         "min_withdraw": "20.00",
@@ -565,9 +566,9 @@ class CoinAmountTest(TestCase):
         with mock.patch("core.rails.get_rates", return_value={"TRON": Decimal("1")}):
             self.assertEqual(coin_amount(legacy_rail_for_symbol("TRON"), Decimal("10")), (None, None))
 
-    def test_tiny_usd_amount_rounds_to_zero_coins(self):
-        with mock.patch("core.rails.get_rates", return_value={"ETH": Decimal("3000")}):
-            coin, rate = coin_amount(self.eth, Decimal("0.01"))
+    def test_corrupt_rate_rounds_coin_amount_to_zero(self):
+        with mock.patch("core.rails.get_rates", return_value={"ETH": Decimal("1e30")}):
+            coin, rate = coin_amount(self.eth, Decimal("20"))
         self.assertEqual(coin, Decimal("0"))
         self.assertIsNotNone(rate)
 ```
@@ -1100,14 +1101,14 @@ class DepositRailTest(TestCase):
         self.assertIsNone(deposit.amount_coin)
         self.assertIsNone(deposit.rate_used)
 
-    def test_rejects_an_amount_too_small_to_express_in_coins(self):
-        with mock.patch("core.rails.get_rates", return_value={"ETH": Decimal("3000")}):
-            self.post_deposit(rail="ETH", amount="0.01", tx_hash="0x" + "c" * 64)
+    def test_rejects_an_amount_that_rounds_to_zero_coins_on_eth(self):
+        with mock.patch("core.rails.get_rates", return_value={"ETH": Decimal("1e30")}):
+            self.post_deposit(rail="ETH", amount="5.00", tx_hash="0x" + "c" * 64)
         self.assertEqual(Deposit.objects.count(), 0)
 
     def test_rejects_an_amount_that_rounds_to_zero_coins_on_a_stablecoin(self):
-        with mock.patch("core.rails.get_rates", return_value={"USDT": Decimal("0.000001")}):
-            self.post_deposit(amount="0.01", tx_hash="d" * 64)
+        with mock.patch("core.rails.get_rates", return_value={"USDT": Decimal("1e12")}):
+            self.post_deposit(amount="10.00", tx_hash="d" * 64)
         self.assertEqual(Deposit.objects.count(), 0)
 
     def test_tx_hash_key_is_namespaced_per_rail(self):
@@ -1269,7 +1270,7 @@ def deposit(request):
 
 Add `from core.rails import resolve_rail, valid_txid, deposit_limits, coin_amount` to the imports in `user_panel/views.py`.
 
-`tx_hash_key` becomes the composite `f"{rail_key}:{tx_hash}"`. This is what makes duplicate detection per-rail: the same hash on two rails produces two distinct keys, so the `unique=True` constraint still does its job per rail without needing the `unique_together` in Task 10.
+`tx_hash_key` becomes the composite `f"{rail_key}:{tx_hash}"`. This is what makes duplicate detection per-rail: the same hash on two rails produces two distinct keys, so the existing column-level `unique=True` constraint already does its job per rail. Task 10 additionally declares `unique_together = [("rail", "tx_hash_key")]` and asserts it; that second constraint is redundant with the namespaced key rather than conflicting with it, and both are kept.
 
 - [ ] **Step 4: Rewrite the deposit template**
 
@@ -1511,8 +1512,8 @@ class WithdrawRailTest(TestCase):
             self.post_withdraw()
         self.assertIsNone(Withdrawal.objects.get().amount_coin)
 
-    def test_rejects_an_amount_too_small_to_express_in_coins(self):
-        with mock.patch("core.rails.get_rates", return_value={"USDT": Decimal("0.000001")}):
+    def test_rejects_an_amount_that_rounds_to_zero_coins(self):
+        with mock.patch("core.rails.get_rates", return_value={"USDT": Decimal("1e12")}):
             self.post_withdraw(amount="20.00")
         self.assertEqual(Withdrawal.objects.count(), 0)
 
