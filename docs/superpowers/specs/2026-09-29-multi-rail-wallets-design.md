@@ -51,6 +51,9 @@ balances.
   its own receive address and its own limits.
 - A user picks any enabled rail on each deposit and each withdrawal; their most recent
   choice is remembered and pre-selected.
+- A user can declare an intended rail at signup or have one assigned by an admin, which
+  preselects the dropdown and lets their payout address be format-checked while the cost
+  of a mistake is still zero. It never restricts them to that rail.
 - No user can ever be locked out of depositing or withdrawing by an admin settings
   change. The class of bug in defect 2 is structurally impossible.
 - Per-network TXID and address validation, replacing the EVM-only regex.
@@ -340,17 +343,64 @@ typed is still what the ledger records, which is the same behaviour as today.
   much to actually send out on-chain.
 - `account.preferred_rail = rail`.
 
-### 5.6 Registration
+### 5.6 Registration and admin account creation
 
-`core/templates/register.html:60-65` — the wallet-type select is removed. It existed
-only to mirror a locked setting, and with per-transaction choice it would be a lie.
+Both entry points offer the enabled rails, and the chosen rail is stored as
+`Account.preferred_rail`.
 
-The address input at `:56-59` is kept and relabelled as an optional default payout
-address, pre-filling the withdraw form's address field. Nothing previously collected is
-lost, and the field is no longer a currency selector.
+**This is a default, not a lock.** The deposit and withdraw dropdowns continue to list
+every enabled rail regardless of `preferred_rail`, and the field is overwritten to
+last-used on every deposit and withdrawal (§5.3, §5.5). Nothing is ever rejected
+because of it. The distinction from today is important: the current code *rejects* any
+wallet type that differs from the platform setting (`core/views.py:103-105`) and then
+overwrites the submitted value with the platform's own (`core/views.py:145`), so the
+existing dropdown cannot express a choice at all.
 
-`core/views.py` registration handling drops its `wallet-type` read; `Account` is created
-without `account_type`.
+**Why it is still worth asking at signup:** it lets us validate the address the user
+types while the cost of being wrong is zero. A TRON address that is 33 characters
+instead of 34 is caught at signup, rather than at withdrawal, which is the moment money
+is actually at risk (§5.5).
+
+**The rail is optional at signup.** The form includes an empty "I'll choose when I
+deposit" option, and the address input is not `required` when no rail is selected. This
+keeps a genuine barrier off the signup path: a user who has not yet decided between
+TRC20 and BEP20 should not have to pick one to create an account. Consequences:
+
+- Rail selected → `valid_address(rail.key, address)` runs; a mismatch is a hard error
+  and the user is shown the expected format for that rail.
+- Rail not selected → the address is stored unvalidated in `Account.wallet_address`,
+  which stays what it has always been: a default payout address that pre-fills the
+  withdraw form. It is not a gate either way.
+
+`Account.wallet_address` is therefore unchanged as a model field. What changes is that
+it is now *meaningful* when a rail is selected, and still merely a convenience note when
+one is not.
+
+**Public signup** — `core/templates/register.html`:
+
+- The wallet-type select (`:60-65`) is replaced by a rail select listing enabled rails
+  plus the empty option, with `account.preferred_rail` preselected when the user is
+  already logged in.
+- The address input (`:56-59`) is relabelled "Payout address (optional)" and its
+  `required` attribute is driven by whether a rail is selected.
+- The page needs `enabled_rails()` and the per-rail format hint in its context, added
+  by the register view.
+
+`core/views.py:84-146` changes as follows: read the submitted rail key instead of
+`wallet-type`; resolve it against the catalog and require it to be active when non-empty
+(rejecting an unknown or disabled key); validate the address against the chosen rail
+when one was given; drop the `requested_wallet_type != platform.wallet_type` check at
+`:103-105` and its in-transaction repeat at `:123-124`; and create the account with
+`preferred_rail=rail` instead of `account_type=platform.wallet_type` (`:145`).
+
+**Admin account creation and edit** — `admin_user_create` and the user-update view in
+`admin_panel/views.py:249-310` gain the same rail select and the same optional
+address validation, and populate `preferred_rail` in place of `account_type`.
+`admin-user-form.html:66-72` renders the rail select with an empty "Not set" option.
+
+Two existing tests assert the behaviour being removed and are deleted:
+`core/tests.py:138-153` (registration rejects a differing wallet network) and its
+in-transaction counterpart.
 
 ### 5.7 Dashboard and transactions
 
@@ -394,15 +444,14 @@ column shows the expected coin figure beside the USD figure (or "rate unavailabl
 `valid_tx_hash()` (`:44-45`) is replaced by `core.rails.valid_txid(rail.key, value)`.
 The duplicate-hash check at `:587-593` is scoped per rail (§4.7).
 
-`approve_deposit` credits `deposit.amount` (USD) exactly as `:614` does today — the
-ledger is unchanged.
+`approve_deposit` credits `deposit.amount_usd` exactly as `:614` credits `deposit.amount`
+today — the ledger is unchanged.
 
 ### 6.3 Per-user form
 
-`admin_user-form.html:66-72` — the wallet-type select becomes a preferred-rail select
-over enabled rails, with an empty "Not set" option. `admin_user_create` and the user
-update view stop reading `platform.wallet_type` to populate `Account.account_type` and
-populate `preferred_rail` instead.
+Covered in §5.6, which is where the admin-side rail selection and address validation are
+specified alongside the public signup form — the two paths share the same semantics and
+are specified together deliberately, so they cannot drift.
 
 ---
 
@@ -419,6 +468,11 @@ using `django.test.TestCase` with direct model setup.
   `RailValidationTest`: per-rail `valid_address` / `valid_txid` accept
   well-formed values and reject cross-rail values (a TRON address is rejected on BEP20;
   a `0x` TXID is rejected on TRON). `limits_for` fallback behaviour.
+  `RegistrationRailTest`: the signup form lists enabled rails; a submitted rail is stored
+  as `preferred_rail`; a disabled or unknown rail key is rejected; an address matching the
+  chosen rail is accepted; a mismatched address is rejected with the expected-format
+  message; submitting no rail and no address succeeds and leaves `preferred_rail` null;
+  submitting no rail with an arbitrary address succeeds and stores it unvalidated.
 - `user_panel/tests.py` — deposit GET lists all enabled rails and omits disabled ones;
   POST rejects a disabled or unknown rail; TXID is validated against the selected rail;
   per-rail min and max are enforced; `amount_coin` and `rate_used` are snapshotted
@@ -428,16 +482,22 @@ using `django.test.TestCase` with direct model setup.
   minimum enforced; coin snapshot stored; insufficient funds still rejected.
 - `admin_panel/tests.py` — settings save per-rail config; saving with an enabled rail
   and an empty address is rejected; saving with a malformed address is rejected; toggling
-  a rail off removes it from the user-facing dropdown; `min` greater than `max` is
-  rejected; per-user preferred rail is assignable.
+  a rail off removes it from the user-facing dropdown and from the signup rail select;
+  `min` greater than `max` is rejected; `admin_user_create` stores the submitted
+  `preferred_rail`; the per-user form rejects an address that does not match the rail
+  selected there.
 
-**Changed or removed coverage** — two existing tests assert the behaviour this spec
+**Changed or removed coverage** — existing tests that assert the behaviour this spec
 deletes, and must be rewritten rather than kept:
 
 - `user_panel/tests.py:257-271` asserts that a user whose `account_type` differs from the
   platform is blocked from depositing. **The gate is gone; the test is deleted.**
 - `admin_panel/tests.py:499-517` asserts that a `wallet_type` change is blocked while
   mismatched accounts exist. **The guard is gone; the test is deleted.**
+- `core/tests.py:138-153` asserts registration rejects a wallet network differing from
+  the platform's. **There is no longer a single platform network; the test is deleted**
+  and replaced by the `RegistrationRailTest` cases above, which cover the real rule
+  (unknown or disabled rail rejected, address must match the chosen rail).
 - `user_panel/tests.py:244-255` (deposit rejected for a non-platform wallet) is
   re-pointed at a disabled rail instead.
 - `admin_panel/tests.py:486-498` (settings update to `TRON`) is re-pointed at per-rail
@@ -458,8 +518,8 @@ such integration is introduced. Admin approval remains the trust boundary.
 | `core/models.py` | add `PaymentRail`; `Account.preferred_rail`; `Deposit`/`Withdrawal.rail` + `amount_coin`/`rate_used`; rename `amount`→`amount_usd`; remove 5 retired fields |
 | `core/currency.py` | unchanged (`RAIL_CATALOG.coin_id` consumes `COIN_IDS`) |
 | `core/migrations/0030_…`, `0031_…` | **new** |
-| `core/views.py` | drop `wallet-type` from registration |
-| `core/templates/register.html` | remove select; relabel address |
+| `core/views.py` | registration: rail select, per-rail address validation, `preferred_rail`; drop the `platform.wallet_type` checks at `:103-105` and `:123-124` |
+| `core/templates/register.html` | replace the fake wallet-type select with a real rail select + optional payout address |
 | `core/admin.py` | register `PaymentRail` |
 | `user_panel/views.py` | rail resolution, per-rail validation, snapshots, drop `account_type` gate |
 | `user_panel/templates/deposit.html` | multi-rail select, per-rail address, coin-amount line, USD label |
@@ -468,7 +528,7 @@ such integration is introduced. Admin approval remains the trust boundary.
 | `admin_panel/views.py` | per-rail settings; rail lookups; drop guard and `valid_wallet_type` |
 | `admin_panel/templates/admin-settings.html` | per-rail config block; relabel `Referral Reward (USDT)` → `Referral Reward ($)` |
 | `admin_panel/templates/admin-deposits.html`, `admin-withdrawals.html` | rail filter, coin column |
-| `admin_panel/templates/admin-user-form.html` | preferred-rail select |
+| `admin_panel/templates/admin-user-form.html` | preferred-rail select + per-rail address validation |
 | `admin_panel/templates/admin-package-form.html` | relabel `Minimum/Maximum Amount (USDT)` → `$` |
 | `core/tests.py`, `user_panel/tests.py`, `admin_panel/tests.py` | per §7 |
 
@@ -486,3 +546,11 @@ Flagged rather than silently decided:
    BEP20) is intentional — same coin, different rails.
 3. **Address format strictness.** The BTC regex covers P2PKH/P2SH and bech32 bech32m
    (`bc1`, `bc1p`). A newer address prefix would need a catalog amendment.
+4. **The signup rail is optional (§5.6).** Chosen so that a user who has not yet decided
+   between TRC20 and BEP20 is not forced to pick one to create an account, and because
+   a mandatory rail on a public signup form is a conversion barrier. The cost is that
+   early address validation does not apply to users who skip it. Requiring it is a
+   one-line change if you would rather have full coverage at signup.
+5. **`Account.wallet_address` is not format-validated when no rail is chosen.** It is
+   stored as an opaque default payout address and is validated only at withdrawal
+   (§5.5), which is the point where funds are actually at risk.
