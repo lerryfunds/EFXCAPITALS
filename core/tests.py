@@ -9,6 +9,7 @@ from unittest import mock
 import os
 from core.models import Account, Referral, Transaction, Support, CryptoRate, Packages, PlatformSettings, userPackage, InvestmentPayout
 from core.currency import get_rates, convert, to_coin
+from core.rails import (RAIL_CATALOG, catalog_entry, valid_address, valid_txid, DEFAULT_MIN_DEPOSIT, DEFAULT_MIN_WITHDRAW, LEGACY_PREFIX)
 from decimal import Decimal
 
 User = get_user_model()
@@ -418,3 +419,77 @@ class CurrencyTest(TestCase):
         self.assertEqual(convert("SOL", Decimal("2")), Decimal("300.00"))
         self.assertEqual(to_coin("BTC", Decimal("30000")), Decimal("0.5"))
         self.assertIsNone(convert("DOGE", Decimal("1")))
+
+
+class RailCatalogTest(TestCase):
+    def test_catalog_contains_the_five_seeded_rails(self):
+        self.assertEqual(
+            set(RAIL_CATALOG),
+            {"USDT:TRC20", "USDT:BEP20", "BTC", "ETH", "SOL"},
+        )
+
+    def test_every_entry_declares_the_fields_the_code_relies_on(self):
+        for key, entry in RAIL_CATALOG.items():
+            with self.subTest(rail=key):
+                self.assertEqual(entry["symbol"], key.split(":")[0])
+                self.assertTrue(entry["label"])
+                self.assertTrue(entry["address_re"])
+                self.assertTrue(entry["txid_re"])
+                self.assertGreaterEqual(entry["coin_decimals"], 0)
+                for field in ("min_deposit", "max_deposit", "min_withdraw", "max_withdraw"):
+                    Decimal(entry[field])
+
+    def test_catalog_entry_returns_none_for_an_unknown_key(self):
+        self.assertIsNone(catalog_entry("DOGE:ERC20"))
+        self.assertIsNone(catalog_entry(""))
+
+    def test_legacy_key_has_no_catalog_entry(self):
+        self.assertIsNone(catalog_entry(f"{LEGACY_PREFIX}TRON"))
+
+
+class RailValidationTest(TestCase):
+    def test_tron_accepts_a_34_char_base58_address(self):
+        self.assertTrue(valid_address("USDT:TRC20", "T" + "1" * 33))
+
+    def test_tron_rejects_a_33_char_address(self):
+        self.assertFalse(valid_address("USDT:TRC20", "T" + "1" * 32))
+
+    def test_bep20_rejects_a_tron_address(self):
+        self.assertFalse(valid_address("USDT:BEP20", "T" + "1" * 33))
+
+    def test_eth_accepts_a_lowercase_0x_address(self):
+        self.assertTrue(valid_address("ETH", "0x" + "a" * 40))
+
+    def test_btc_accepts_p2pkh_and_bech32(self):
+        self.assertTrue(valid_address("BTC", "1" + "a" * 33))
+        self.assertTrue(valid_address("BTC", "bc1q" + "a" * 38))
+
+    def test_sol_address_length_bounds(self):
+        self.assertFalse(valid_address("SOL", "1" * 31))
+        self.assertTrue(valid_address("SOL", "1" * 32))
+        self.assertFalse(valid_address("SOL", "1" * 45))
+
+    def test_empty_address_is_never_valid(self):
+        for key in RAIL_CATALOG:
+            with self.subTest(rail=key):
+                self.assertFalse(valid_address(key, ""))
+                self.assertFalse(valid_address(key, "   "))
+
+    def test_unknown_and_legacy_keys_never_validate(self):
+        self.assertFalse(valid_address("DOGE:ERC20", "T" + "1" * 33))
+        self.assertFalse(valid_address(f"{LEGACY_PREFIX}TRON", "T" + "1" * 33))
+        self.assertFalse(valid_txid("DOGE:ERC20", "a" * 64))
+        self.assertFalse(valid_txid(f"{LEGACY_PREFIX}TRON", "a" * 64))
+
+    def test_txid_formats_are_rail_specific(self):
+        self.assertTrue(valid_txid("USDT:TRC20", "a" * 64))
+        self.assertFalse(valid_txid("USDT:TRC20", "0x" + "a" * 64))
+        self.assertTrue(valid_txid("ETH", "0x" + "A" * 64))
+        self.assertFalse(valid_txid("ETH", "a" * 64))
+        self.assertTrue(valid_txid("BTC", "1" * 64))
+        self.assertFalse(valid_txid("BTC", "0x" + "a" * 64))
+        self.assertTrue(valid_txid("SOL", "1" * 88))
+
+    def test_validators_strip_surrounding_whitespace(self):
+        self.assertTrue(valid_txid("ETH", "  0x" + "a" * 64 + "\n"))
+        self.assertTrue(valid_address("ETH", " 0x" + "a" * 40 + " "))
