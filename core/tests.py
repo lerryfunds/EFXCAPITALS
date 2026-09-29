@@ -432,12 +432,14 @@ class RailCatalogTest(TestCase):
         for key, entry in RAIL_CATALOG.items():
             with self.subTest(rail=key):
                 self.assertEqual(entry["symbol"], key.split(":")[0])
+                self.assertTrue(entry["network"])
                 self.assertTrue(entry["label"])
+                self.assertTrue(entry["coin_id"])
                 self.assertTrue(entry["address_re"])
                 self.assertTrue(entry["txid_re"])
                 self.assertGreaterEqual(entry["coin_decimals"], 0)
-                for field in ("min_deposit", "max_deposit", "min_withdraw", "max_withdraw"):
-                    Decimal(entry[field])
+                for low, high in (("min_deposit", "max_deposit"), ("min_withdraw", "max_withdraw")):
+                    self.assertLessEqual(Decimal(entry[low]), Decimal(entry[high]))
 
     def test_catalog_entry_returns_none_for_an_unknown_key(self):
         self.assertIsNone(catalog_entry("DOGE:ERC20"))
@@ -445,6 +447,9 @@ class RailCatalogTest(TestCase):
 
     def test_legacy_key_has_no_catalog_entry(self):
         self.assertIsNone(catalog_entry(f"{LEGACY_PREFIX}TRON"))
+
+    def test_none_key_has_no_catalog_entry(self):
+        self.assertIsNone(catalog_entry(None))
 
 
 class RailValidationTest(TestCase):
@@ -463,6 +468,18 @@ class RailValidationTest(TestCase):
     def test_btc_accepts_p2pkh_and_bech32(self):
         self.assertTrue(valid_address("BTC", "1" + "a" * 33))
         self.assertTrue(valid_address("BTC", "bc1q" + "a" * 38))
+
+    def test_btc_base58_addresses_still_match(self):
+        self.assertTrue(valid_address("BTC", "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"))
+        self.assertTrue(valid_address("BTC", "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"))
+
+    def test_btc_bech32_length_bounds(self):
+        p2wpkh = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"  # 42 chars
+        taproot = "bc1pqqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0sagmhkq"  # 62 chars
+        self.assertTrue(valid_address("BTC", p2wpkh))
+        self.assertTrue(valid_address("BTC", taproot))
+        self.assertFalse(valid_address("BTC", p2wpkh[:-1]))
+        self.assertFalse(valid_address("BTC", taproot + "q"))
 
     def test_sol_address_length_bounds(self):
         self.assertFalse(valid_address("SOL", "1" * 31))
@@ -486,9 +503,30 @@ class RailValidationTest(TestCase):
         self.assertFalse(valid_txid("USDT:TRC20", "0x" + "a" * 64))
         self.assertTrue(valid_txid("ETH", "0x" + "A" * 64))
         self.assertFalse(valid_txid("ETH", "a" * 64))
-        self.assertTrue(valid_txid("BTC", "1" * 64))
+        self.assertTrue(valid_txid("BTC", "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"))
+        self.assertTrue(valid_txid("BTC", "a" * 64))
         self.assertFalse(valid_txid("BTC", "0x" + "a" * 64))
         self.assertTrue(valid_txid("SOL", "1" * 88))
+
+    def test_btc_txid_requires_exactly_64_hex_characters(self):
+        self.assertFalse(valid_txid("BTC", "z" * 64))
+        self.assertFalse(valid_txid("BTC", "z" * 32))
+        self.assertFalse(valid_txid("BTC", "a" * 63))
+        self.assertFalse(valid_txid("BTC", "a" * 65))
+        self.assertFalse(valid_txid("BTC", "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"))
+
+    def test_sol_txid_length_bounds(self):
+        self.assertTrue(valid_txid("SOL", "1" * 87))
+        self.assertTrue(valid_txid("SOL", "1" * 88))
+        self.assertFalse(valid_txid("SOL", "5" * 64))
+        self.assertFalse(valid_txid("SOL", "1" * 86))
+        self.assertFalse(valid_txid("SOL", "1" * 89))
+
+    def test_none_keys_and_values_never_validate(self):
+        self.assertFalse(valid_address(None, None))
+        self.assertFalse(valid_txid(None, None))
+        self.assertFalse(valid_address("BTC", None))
+        self.assertFalse(valid_txid("BTC", None))
 
     def test_validators_strip_surrounding_whitespace(self):
         self.assertTrue(valid_txid("ETH", "  0x" + "a" * 64 + "\n"))
