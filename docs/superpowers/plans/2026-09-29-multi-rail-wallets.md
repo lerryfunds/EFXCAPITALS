@@ -122,6 +122,7 @@ class RailValidationTest(TestCase):
         self.assertTrue(valid_txid("ETH", "0x" + "A" * 64))
         self.assertFalse(valid_txid("ETH", "a" * 64))
         self.assertTrue(valid_txid("BTC", "a" * 64))
+        self.assertTrue(valid_txid("BTC", "4a5e1e4b4c5e1e4b4c5e1e4b4c5e1e4b4c5e1e4b4c5e1e4b4c5e1e4b4cdeda33b"))
         self.assertFalse(valid_txid("BTC", "0x" + "a" * 64))
         self.assertFalse(valid_txid("BTC", "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"))
         self.assertTrue(valid_txid("SOL", "1" * 88))
