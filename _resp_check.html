@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responsive Check</title>
+<link rel="stylesheet" href="/user_panel/static/css/style.css">
+<link rel="stylesheet" href="/user_panel/static/css/app.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="appbar">
+  <div class="container appbar-inner">
+    <div class="appbar-left">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button"><span></span><span></span><span></span></button>
+      <a href="#" class="brand"><span class="brand-mark">EX</span><span class="brand-text">EFX<b>CAPITALS</b></span></a>
+    </div>
+    <div class="appbar-right">
+      <div class="user-chip"><span class="avatar">AD</span><span class="u-name">John Doe</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="app-body">
+  <aside class="sidebar" id="appSidebar">
+    <div class="sidebar-mobile-head">
+      <div class="brand"><span class="brand-mark">EX</span><span class="brand-text">EFX<b>CAPITALS</b></span></div>
+      <button class="sidebar-close-btn" id="sidebarCloseBtn" type="button">x</button>
+    </div>
+    <span class="side-label">Menu</span>
+    <a href="#" class="side-link"><span class="em">#</span> Dashboard</a>
+    <a href="#" class="side-link"><span class="em">#</span> Wallets</a>
+    <a href="#" class="side-link"><span class="em">#</span> My Investments</a>
+    <a href="#" class="side-link"><span class="em">#</span> Transactions</a>
+    <a href="#" class="side-link"><span class="em">#</span> Deposit</a>
+    <a href="#" class="side-link"><span class="em">#</span> Withdraw</a>
+    <span class="side-label">General</span>
+    <a href="#" class="side-link"><span class="em">#</span> Referrals</a>
+    <a href="#" class="side-link"><span class="em">#</span> Settings</a>
+    <a href="#" class="side-link"><span class="em">#</span> Support</a>
+    <div class="side-cta"><a href="#" class="btn btn-outline btn-block">Log Out</a></div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <main class="content">
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Welcome back, John Doe. Your portfolio is performing well.</p>
+      </div>
+      <a href="#" class="btn btn-gold">Invest Now <span class="arrow">→</span></a>
+    </div>
+
+    <div class="wallet-grid">
+      <div class="w-card grad">
+        <div class="w-top"><span class="w-label">Wallet Balance</span></div>
+        <b>$12500.00</b>
+        <div class="w-note">Available USDT · ≈ 12500.000000 USDT</div>
+      </div>
+      <div class="w-card">
+        <div class="w-top"><span class="w-label">Pending Withdrawals</span><span class="w-chip red">2</span></div>
+        <b>$1500.00</b>
+        <div class="w-note">In review</div>
+      </div>
+    </div>
+
+    <div class="quick-row">
+      <a href="#" class="quick-card"><span class="dir">D</span><span><b>Deposit Funds</b><em>Fund your wallet</em></span></a>
+      <a href="#" class="quick-card"><span class="dir">W</span><span><b>Withdraw</b><em>Submit a request</em></span></a>
+      <a href="#" class="quick-card"><span class="dir">A</span><span><b>Activate Package</b><em>Browse live plans</em></span></a>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Market Rates</h3><span class="tag green">Live · 5 min cache</span></div>
+      <div class="market-grid">
+        <div class="info-chip"><b>USDT</b>$1.00</div>
+        <div class="info-chip"><b>BTC</b>$83902</div>
+        <div class="info-chip"><b>ETH</b>$2686</div>
+        <div class="info-chip"><b>SOL</b>$120.27</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Quick Overview</h3><a href="#">My Investments →</a></div>
+      <div class="overview-grid">
+        <a href="#" class="info-chip"><b>3 Active Packages</b>$1200 invested</a>
+        <a href="#" class="info-chip"><b>Transactions</b>View your activity log</a>
+        <a href="#" class="info-chip"><b>Referrals</b>Invite friends and earn</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Recent Transactions</h3></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td><b>Deposit</b></td><td>$500.00</td><td><span class="tag green">Active</span></td><td>2026-10-08 12:00</td></tr>
+            <tr><td><b>Withdrawal</b></td><td>$200.00</td><td><span class="tag">Pending</span></td><td>2026-10-07 09:30</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

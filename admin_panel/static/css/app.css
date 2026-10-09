@@ -1213,3 +1213,19 @@ html, body{
   font-size: 24px;
   margin-bottom: 4px;
 }
+
+/* ============================================================
+   Responsive listing fix
+   Wide tables and long values (addresses, hashes, emails) were
+   forcing the content column to its min-content width, which
+   overflowed small/medium screens and got clipped by the global
+   overflow-x:hidden. Constrain the column and let tables scroll.
+   ============================================================ */
+.content{min-width:0}
+.panel,.table-panel,.info-box,.wallet-grid,.quick-row{min-width:0}
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+address,.address-copy,.wallet-address-card,.tx-hash,.user-email{overflow-wrap:anywhere;word-break:break-word}
+.app-body{grid-template-columns:218px minmax(0,1fr)}
+@media(max-width:1024px){
+  .app-body{grid-template-columns:minmax(0,1fr)}
+}
