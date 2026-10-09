@@ -1,16 +1,21 @@
 <header class="appbar admin-bar">
   <div class="container appbar-inner">
-    <a href="{% url "home" %}" class="brand">
-      <span class="brand-mark">EX</span>
-      <span class="brand-text">EFX<b>CAPITALS</b></span>
-      <span class="admin-chip">Admin</span>
-    </a>
+    <div class="appbar-left">
+      <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="{% url "home" %}" class="brand">
+        <span class="brand-mark">EX</span>
+        <span class="brand-text">EFX<b>CAPITALS</b></span>
+        <span class="admin-chip">Admin</span>
+      </a>
+    </div>
     <div class="appbar-right">
       <div class="user-chip">
         <span class="avatar">AD</span>
         <span class="u-name">Administrator</span>
       </div>
-      <a href="{% url "home" %}" class="btn btn-ghost">← Back to Site</a>
+      <a href="{% url "home" %}" class="btn btn-ghost">Back to Site</a>
     </div>
   </div>
 </header>

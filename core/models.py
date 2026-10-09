@@ -31,6 +31,59 @@ class PlatformSettings(models.Model):
     def __str__(self):
         return "Platform settings"
 
+class PaymentRail(models.Model):
+    key = models.CharField(max_length=50, unique=True)
+    symbol = models.CharField(max_length=10)
+    network = models.CharField(max_length=20)
+    label = models.CharField(max_length=50)
+    is_active = models.BooleanField(default=False)
+    address = models.CharField(max_length=150, blank=True, default="")
+    min_deposit = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
+    max_deposit = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
+    min_withdraw = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
+    max_withdraw = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
+    display_order = models.IntegerField(default=0)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["display_order", "key"]
+        verbose_name = "Payment rail"
+        verbose_name_plural = "Payment rails"
+
+    @classmethod
+    def rails(cls):
+        return cls.objects.all().order_by("display_order", "key")
+
+    @classmethod
+    def active_rails(cls):
+        return cls.rails().filter(is_active=True)
+
+    def __str__(self):
+        return self.label or self.key
+
+
+def legacy_rail_for_symbol(symbol):
+    # Imported here rather than at module scope on purpose: core.rails imports
+    # core.models, so a module-level import in this file would be circular.
+    from .rails import LEGACY_PREFIX
+
+    normalized = (symbol or "").strip().upper()
+    if not normalized:
+        return None
+    key = f"{LEGACY_PREFIX}{normalized}"
+    rail, _ = PaymentRail.objects.get_or_create(
+        key=key,
+        defaults={
+            "symbol": normalized[:10],
+            "network": "LEGACY",
+            "label": f"{normalized} (retired network)",
+            "is_active": False,
+            "address": "",
+            "display_order": 9999,
+        },
+    )
+    return rail
+
 class User(AbstractUser):
     user_id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     phone_number = models.CharField(null=True, max_length=30)
@@ -45,7 +98,34 @@ class Account(models.Model):
     date_created = models.DateTimeField(auto_now=False, auto_now_add=True, null=True)
     date_updated = models.DateTimeField(auto_now=True, auto_now_add=False, null=True)
     referral_code = models.UUIDField(unique=True, default=uuid.uuid4, null=True)
-    
+    preferred_rail = models.ForeignKey(PaymentRail, null=True, blank=True, on_delete=models.SET_NULL, related_name="accounts")
+
+
+class Wallet(models.Model):
+    class Asset(models.TextChoices):
+        USDT = "USDT", "USDT"
+        ETH = "ETH", "Ethereum"
+        BTC = "BTC", "Bitcoin"
+        SOL = "SOL", "Solana"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="wallets")
+    asset = models.CharField(max_length=10, choices=Asset.choices)
+    address = models.CharField(max_length=150, blank=True, default="")
+    balance = models.DecimalField(max_digits=36, decimal_places=18, default=Decimal("0"))
+    is_active = models.BooleanField(default=False)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "asset"], name="unique_user_wallet_asset"),
+        ]
+        ordering = ["asset"]
+
+    def __str__(self):
+        return f"{self.user.username} {self.asset} wallet"
+
 
 class Packages(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -105,6 +185,9 @@ class Deposit(models.Model):
     status = models.CharField(max_length=10, default="PENDING")
     date_requested = models.DateTimeField(default=timezone.now, editable=False)
     date_resolved = models.DateTimeField(null=True, blank=True)
+    rail = models.ForeignKey(PaymentRail, null=True, on_delete=models.PROTECT, related_name="deposits")
+    amount_coin = models.DecimalField(max_digits=36, decimal_places=18, null=True, blank=True)
+    rate_used = models.DecimalField(max_digits=24, decimal_places=8, null=True, blank=True)
 
 class Withdrawal(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -116,6 +199,9 @@ class Withdrawal(models.Model):
     status = models.CharField(max_length=10, default="PENDING")
     date_requested = models.DateTimeField(auto_now=False, auto_now_add=True)
     date_approved = models.DateTimeField(null=True, blank=True)
+    rail = models.ForeignKey(PaymentRail, null=True, on_delete=models.PROTECT, related_name="withdrawals")
+    amount_coin = models.DecimalField(max_digits=36, decimal_places=18, null=True, blank=True)
+    rate_used = models.DecimalField(max_digits=24, decimal_places=8, null=True, blank=True)
 
 class userPackage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)

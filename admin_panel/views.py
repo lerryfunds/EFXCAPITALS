@@ -3,7 +3,7 @@ from django.views.decorators.http import require_POST
 from django.core.exceptions import BadRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
-from core.models import Packages, Account, Withdrawal, Support, Deposit, Transaction, AuditLog, PlatformSettings
+from core.models import Packages, Account, Withdrawal, Support, Deposit, Transaction, AuditLog, PlatformSettings, PaymentRail, Wallet
 from core.currency import get_rates
 from django.contrib import messages
 from django.db import IntegrityError, transaction
@@ -246,7 +246,8 @@ def admin_user_create(request):
 
         username = form.get("username", "").strip()
         email = form.get("email", "").strip()
-        requested_wallet_type = form.get("wallet-type", "").strip().upper()
+        raw_type = (form.get("wallet-type") or form.get("rail") or form.get("asset") or "").strip()
+        requested_wallet_type = raw_type.upper()
         platform = PlatformSettings.load()
         wallet_address = form.get("address", "").strip()
         raw_balance = form.get("balance", "0").strip()
@@ -258,9 +259,39 @@ def admin_user_create(request):
         if len(username) > 150 or len(email) > 254:
             messages.error(request, "One or more account fields are too long")
             return redirect("admin_user_create")
-        if requested_wallet_type != platform.wallet_type.strip().upper():
+
+        configured_plat_type = platform.wallet_type.strip().upper()
+        if configured_plat_type not in ["USDT", ""] and requested_wallet_type != configured_plat_type:
             messages.error(request, f"Accounts are currently limited to {platform.wallet_type}")
             return redirect("admin_user_create")
+
+        # Map to Wallet.Asset
+        if requested_wallet_type.startswith("USDT") or requested_wallet_type in ["TRON", "TRC20", "BEP20", "ERC20"]:
+            target_asset = Wallet.Asset.USDT
+        elif requested_wallet_type.startswith("ETH"):
+            target_asset = Wallet.Asset.ETH
+        elif requested_wallet_type.startswith("BTC"):
+            target_asset = Wallet.Asset.BTC
+        elif requested_wallet_type.startswith("SOL"):
+            target_asset = Wallet.Asset.SOL
+        elif requested_wallet_type in [choice[0] for choice in Wallet.Asset.choices]:
+            target_asset = requested_wallet_type
+        elif requested_wallet_type == configured_plat_type:
+            target_asset = Wallet.Asset.USDT
+        else:
+            messages.error(request, "Please select a supported wallet option")
+            return redirect("admin_user_create")
+
+        matched_rail = None
+        if ":" in raw_type:
+            matched_rail = PaymentRail.objects.filter(key__iexact=raw_type).first()
+        if not matched_rail:
+            matched_rail = (
+                PaymentRail.objects.filter(key__iexact=requested_wallet_type).first()
+                or PaymentRail.objects.filter(symbol__iexact=target_asset, is_active=True).first()
+                or PaymentRail.objects.filter(symbol__iexact=target_asset).first()
+            )
+
         if not wallet_address or len(wallet_address) > 150:
             messages.error(request, "A valid wallet address is required")
             return redirect("admin_user_create")
@@ -288,7 +319,8 @@ def admin_user_create(request):
         try:
             with transaction.atomic():
                 platform = PlatformSettings.objects.select_for_update().get(pk=1)
-                if requested_wallet_type != platform.wallet_type.strip().upper():
+                configured_plat_type = platform.wallet_type.strip().upper()
+                if configured_plat_type not in ["USDT", ""] and requested_wallet_type != configured_plat_type:
                     messages.error(request, f"Accounts are currently limited to {platform.wallet_type}")
                     return redirect("admin_user_create")
                 user = User.objects.create_user(
@@ -304,17 +336,31 @@ def admin_user_create(request):
                 user.save(update_fields=["password"])
                 Account.objects.create(
                     user=user,
-                    account_type=platform.wallet_type.strip().upper(),
+                    account_type=target_asset,
                     balance=wallet_balance,
                     wallet_address=wallet_address,
+                    preferred_rail=matched_rail,
                 )
+                for asset_choice in [Wallet.Asset.USDT, Wallet.Asset.ETH, Wallet.Asset.BTC, Wallet.Asset.SOL]:
+                    Wallet.objects.create(
+                        user=user,
+                        asset=asset_choice,
+                        address=wallet_address if asset_choice == target_asset else "",
+                        balance=wallet_balance if asset_choice == target_asset else Decimal("0"),
+                        is_active=(asset_choice == target_asset),
+                    )
                 add_audit_log(request, "Created user", username)
         except IntegrityError:
             messages.error(request, "User with username already exists")
             return redirect("admin_user_create")
         return redirect("admin_users_view")
     
-    return render(request, "admin-user-form.html", {"platform": PlatformSettings.load()})
+    context = {
+        "platform": PlatformSettings.load(),
+        "rails": PaymentRail.objects.all().order_by("display_order", "key"),
+        "wallet_assets": Wallet.Asset.choices,
+    }
+    return render(request, "admin-user-form.html", context)
 
 @require_POST
 def admin_user_delete(request, id):

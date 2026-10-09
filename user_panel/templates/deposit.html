@@ -74,7 +74,9 @@
         <p id="usdEst">1 USDT ≈ $1.00</p>
       </div>
       <div class="warn">
-          <span class="w-icon">!</span>
+        <span class="w-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </span>
         <span>Only send <b>{{ platform_wallet_type }}</b> on the selected network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
       </div>
       <button type="submit" class="btn btn-gold btn-block">Submit Deposit</button>
@@ -98,7 +100,7 @@
               <td><span class="tag {% if d.status == 'APPROVED' %}green{% elif d.status == 'REJECTED' %}red{% else %}gold{% endif %}">{{ d.status|title }}</span></td>
             </tr>
             {% empty %}
-            <tr><td colspan="4"><div class="empty">No deposits yet.</div></td></tr>
+            <tr><td colspan="4"><div class="empty">No deposit requests yet. Submit your transaction hash above to fund your wallet.</div></td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -112,7 +114,7 @@ window.CRYPTORATES = {{ prices_json|safe }};
 function copyAddress(btn){
   navigator.clipboard.writeText(document.querySelector('address').textContent.trim()).then(()=>{
     const t = btn.textContent;
-    btn.textContent = 'Copied ✓';
+    btn.textContent = 'Copied!';
     setTimeout(()=>btn.textContent = t, 1600);
   });
 }

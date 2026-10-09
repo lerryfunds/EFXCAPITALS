@@ -28,15 +28,18 @@
 
     <div class="panel">
       <div class="panel-head">
-        <h3>Your referral code</h3>
+        <h3>Your Referral Link</h3>
+        <span class="tag gold">+${{ reward|floatformat:2 }} per invite</span>
       </div>
-      <div class="inv-row">
-        <div class="inv-name"><b>Share this link with friends</b><span>They use it on signup to credit you as the referrer</span></div>
-        <div style="text-align:right;font-size:16px"><b class="mono" id="refLinkText" style="color:var(--gold)">{{ referral_link }}</b></div>
-        <div class="inv-nums"><b>+${{ total_earned|floatformat:2 }}</b><span>Total commission earned</span></div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-        <button class="copy-btn" onclick="copyRef(this)">Copy Link</button>
+      <div class="referral-share-card">
+        <p style="margin:0 0 14px;font-size:14px;color:var(--muted);line-height:1.5">Share your personal referral link with colleagues or friends. When they create an account, your wallet is credited automatically.</p>
+        <div class="referral-input-group">
+          <div class="referral-link-display mono" id="refLinkText">{{ referral_link }}</div>
+          <button type="button" class="btn btn-gold copy-btn" onclick="copyRef(this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Copy Link</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -75,7 +78,7 @@
               <td><span class="tag green">+${{ r.reward|floatformat:2 }}</span></td>
             </tr>
             {% empty %}
-            <tr><td colspan="3"><div class="empty">No referrals yet. Share your link to get started.</div></td></tr>
+            <tr><td colspan="3"><div class="empty">No referrals yet. Share your referral link above to earn an instant bonus when someone registers.</div></td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -86,10 +89,17 @@
 
 <script>
 function copyRef(btn){
-  navigator.clipboard.writeText(document.getElementById("refLinkText").textContent).then(()=>{
-    const t = btn.textContent;
-    btn.textContent = 'Copied ✓';
-    setTimeout(()=>btn.textContent = t, 1600);
+  navigator.clipboard.writeText(document.getElementById("refLinkText").textContent.trim()).then(()=>{
+    const span = btn.querySelector('span');
+    if(span){
+      const t = span.textContent;
+      span.textContent = 'Copied!';
+      setTimeout(()=>span.textContent = t, 1600);
+    } else {
+      const t = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(()=>btn.textContent = t, 1600);
+    }
   });
 }
 </script>

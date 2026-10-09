@@ -1,17 +1,41 @@
-  <aside class="sidebar">
-    <span class="side-label">Admin</span>
-    <a href="{% url "admin_dashboard" %}" data-active="admin.html" class="side-link"><span class="em">▦</span> Overview</a>
-    <a href="{% url "admin_users_view" %}" class="side-link"><span class="em">⛭</span> Users</a>
-    <a href="{% url "admin_user_create" %}" class="side-link"><span class="em">＋</span> Create User</a>
-    <a href="{% url "admin_packages_list" %}" class="side-link"><span class="em">▦</span> Packages</a>
-    <a href="{% url "package_create" %}" class="side-link"><span class="em">＋</span> Create Package</a>
-    <a href="{% url "admin_withdrawals" "all" %}" class="side-link"><span class="em">↑</span> Withdrawals</a>
-    <a href="{% url "admin_deposits" %}" class="side-link"><span class="em">↓</span> Deposits</a>
-    <a href="{% url "admin_support" %}" class="side-link"><span class="em">✉</span> Support Messages</a>
-    <span class="side-label">System</span>
-    <a href="{% url "admin_logs" %}" class="side-link"><span class="em">⌁</span> Audit Logs</a>
-    <a href="{% url "admin_settings" %}" class="side-link"><span class="em">⚙</span> Settings</a>
-    <div class="side-cta">
-      <a href="{% url "logout" %}" class="btn btn-outline btn-block">Logout</a>
-    </div>
-  </aside>
+<aside class="sidebar" id="appSidebar">
+  <span class="side-label">Admin</span>
+  <a href="{% url "admin_dashboard" %}" data-active="admin.html" class="side-link"><span class="em">#</span> Overview</a>
+  <a href="{% url "admin_users_view" %}" class="side-link"><span class="em">U</span> Users</a>
+  <a href="{% url "admin_user_create" %}" class="side-link"><span class="em">+</span> Create User</a>
+  <a href="{% url "admin_packages_list" %}" class="side-link"><span class="em">P</span> Packages</a>
+  <a href="{% url "package_create" %}" class="side-link"><span class="em">+</span> Create Package</a>
+  <a href="{% url "admin_withdrawals" "all" %}" class="side-link"><span class="em">W</span> Withdrawals</a>
+  <a href="{% url "admin_deposits" %}" class="side-link"><span class="em">D</span> Deposits</a>
+  <a href="{% url "admin_support" %}" class="side-link"><span class="em">S</span> Support Messages</a>
+  <span class="side-label">System</span>
+  <a href="{% url "admin_logs" %}" class="side-link"><span class="em">L</span> Audit Logs</a>
+  <a href="{% url "admin_settings" %}" class="side-link"><span class="em">*</span> Settings</a>
+  <div class="side-cta">
+    <a href="{% url "logout" %}" class="btn btn-outline btn-block">Logout</a>
+  </div>
+</aside>
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+<script>
+(function () {
+  var toggle = document.getElementById('sidebarToggle');
+  var sidebar = document.getElementById('appSidebar');
+  var backdrop = document.getElementById('sidebarBackdrop');
+  if (!toggle || !sidebar || !backdrop) return;
+  function isOpen() { return sidebar.classList.contains('open'); }
+  function setOpen(open) {
+    sidebar.classList.toggle('open', open);
+    backdrop.classList.toggle('show', open);
+    toggle.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  toggle.addEventListener('click', function () { setOpen(!isOpen()); });
+  backdrop.addEventListener('click', function () { setOpen(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isOpen()) setOpen(false);
+  });
+  sidebar.querySelectorAll('a').forEach(function (link) {
+    link.addEventListener('click', function () { setOpen(false); });
+  });
+})();
+</script>

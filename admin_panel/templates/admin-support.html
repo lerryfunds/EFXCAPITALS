@@ -29,7 +29,9 @@
 
     <div class="toolbar">
       <div class="search">
-        <span class="s-ico">⌕</span>
+        <span class="s-ico">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
         <input id="supportSearch" type="text" placeholder="Search by sender, subject or message…">
       </div>
       <div class="filters-row">
@@ -78,13 +80,13 @@
                   {% if support.status != "REPLIED" %}
                     <form method="post" action="{% url "support_mark_replied" support.id %}">
                       {% csrf_token %}
-                      <button type="submit" class="act-btn green" title="Mark as replied">✎</button>
+                      <button type="submit" class="act-btn green" title="Mark as replied">Reply</button>
                     </form>
                   {% endif %}
                   {% if support.status == "UNREAD" %}
                     <form method="post" action="{% url "support_mark_read" support.id %}">
                       {% csrf_token %}
-                      <button type="submit" class="act-btn" title="Mark as read">✓</button>
+                      <button type="submit" class="act-btn" title="Mark as read">Read</button>
                     </form>
                   {% endif %}
                 </div>

@@ -51,15 +51,21 @@
 
     <div class="quick-row">
       <a href="{% url "deposit" %}" class="quick-card">
-        <span class="dir">↓</span>
+        <span class="dir">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+        </span>
         <span><b>Deposit Funds</b><em>Fund your wallet</em></span>
       </a>
       <a href="{% url "withdraw" %}" class="quick-card">
-        <span class="dir">↑</span>
+        <span class="dir">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+        </span>
         <span><b>Withdraw</b><em>Submit a request</em></span>
       </a>
       <a href="{% url "packages" %}" class="quick-card">
-        <span class="dir">+</span>
+        <span class="dir">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </span>
         <span><b>Activate Package</b><em>Browse live plans</em></span>
       </a>
     </div>

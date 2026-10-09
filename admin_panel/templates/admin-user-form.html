@@ -63,17 +63,27 @@
       <h3 class="form-section-title">Wallet</h3>
       {% if not edit %}
         <div class="field">
-          <label for="balance">Wallet Type</label>
-          <div class="input-icon">
+          <label for="wallet-type">Wallet Currency &amp; Network</label>
+          <div class="select-wrap">
             <select name="wallet-type" id="wallet-type" style="width: 100%;">
-              <option value="{{ platform.wallet_type }}" selected>{{ platform.wallet_type }}</option>
+              <optgroup label="Tether USD (USDT) Networks">
+                <option value="USDT:TRC20" selected>USDT (Tron TRC-20)</option>
+                <option value="USDT:BEP20">USDT (BNB Smart Chain BEP-20)</option>
+                <option value="USDT:ERC20">USDT (Ethereum ERC-20)</option>
+                <option value="USDT">USDT (Tether USD)</option>
+              </optgroup>
+              <optgroup label="Other Cryptocurrencies">
+                <option value="BTC">Bitcoin (BTC)</option>
+                <option value="ETH">Ethereum (ETH)</option>
+                <option value="SOL">Solana (SOL)</option>
+              </optgroup>
             </select>
           </div>
         </div>
         <div class="field">
-          <label for="balance">Wallet Address</label>
+          <label for="address">Wallet Address</label>
           <div class="input-icon">
-            <input id="address" type="text" maxlength="150" placeholder="Enter your wallet address" name="address">
+            <input id="address" type="text" maxlength="150" placeholder="Enter wallet address" name="address">
           </div>
         </div>
       {% endif %}
@@ -108,7 +118,7 @@
 
       <hr class="divider">
       <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
-        {% comment %} <span class="tag green" id="savedTag" style="align-self:center">✓ Saved</span> {% endcomment %}
+        {% comment %} <span class="tag green" id="savedTag" style="align-self:center">Saved</span> {% endcomment %}
         <a href="{% url "admin_users_view" %}" class="btn btn-ghost">Cancel</a>
         <button type="submit" id="submitBtn" class="btn btn-gold">Create User</button>
       </div>
