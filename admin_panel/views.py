@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import get_user_model
 from core.models import Packages, Account, Withdrawal, Support, Deposit, Transaction, AuditLog, PlatformSettings, PaymentRail, Wallet
 from core.currency import get_rates
+from core.rails import catalog_entry, valid_txid
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import F, Sum
@@ -15,6 +16,17 @@ import re
 User = get_user_model()
 MAX_FINANCIAL_AMOUNT = Decimal("9999999999999999.99")
 MAX_REFERRAL_REWARD = Decimal("99999999.99")
+
+WALLET_CHOICES = [
+    ("USDT:TRC20", "USDT (Tron TRC-20)"),
+    ("USDT:BEP20", "USDT (BNB Smart Chain BEP-20)"),
+    ("USDT:ERC20", "USDT (Ethereum ERC-20)"),
+    ("USDT", "USDT (Tether USD)"),
+    ("BTC", "Bitcoin (BTC)"),
+    ("ETH", "Ethereum (ETH)"),
+    ("SOL", "Solana (SOL)"),
+]
+WALLET_VALUES = [value for value, _ in WALLET_CHOICES]
 
 
 def pending_financial_transaction(user, related_id, tx_type, amount):
@@ -42,7 +54,41 @@ def valid_wallet_type(value, platform):
 
 
 def valid_tx_hash(value):
-    return bool(re.fullmatch(r"(?:0x)?[0-9a-fA-F]{64}", value.strip()))
+    return bool(re.fullmatch(r"(?:0x)?[0-9a-f]{64}", value.strip(), flags=re.IGNORECASE))
+
+
+def resolve_wallet_choice(value):
+    """Map a submitted wallet-type value to a (Wallet.Asset, PaymentRail|None) pair."""
+    raw = (value or "").strip()
+    requested = raw.upper()
+    if not requested:
+        raise ValueError("Please select a supported wallet option")
+
+    asset_choices = [choice[0] for choice in Wallet.Asset.choices]
+    if requested.startswith("USDT") or requested in ["TRON", "TRC20", "BEP20", "ERC20"]:
+        asset = Wallet.Asset.USDT
+    elif requested.startswith("ETH"):
+        asset = Wallet.Asset.ETH
+    elif requested.startswith("BTC"):
+        asset = Wallet.Asset.BTC
+    elif requested.startswith("SOL"):
+        asset = Wallet.Asset.SOL
+    elif requested in asset_choices:
+        asset = requested
+    else:
+        raise ValueError("Please select a supported wallet option")
+
+    rail = None
+    if ":" in raw:
+        rail = PaymentRail.objects.filter(key__iexact=raw).first()
+    if not rail:
+        rail = (
+            PaymentRail.objects.filter(key__iexact=requested).first()
+            or PaymentRail.objects.filter(symbol__iexact=asset, is_active=True).first()
+            or PaymentRail.objects.filter(symbol__iexact=asset).first()
+        )
+    return asset, rail
+
 
 
 def package_form_data(form):
@@ -266,31 +312,11 @@ def admin_user_create(request):
             return redirect("admin_user_create")
 
         # Map to Wallet.Asset
-        if requested_wallet_type.startswith("USDT") or requested_wallet_type in ["TRON", "TRC20", "BEP20", "ERC20"]:
-            target_asset = Wallet.Asset.USDT
-        elif requested_wallet_type.startswith("ETH"):
-            target_asset = Wallet.Asset.ETH
-        elif requested_wallet_type.startswith("BTC"):
-            target_asset = Wallet.Asset.BTC
-        elif requested_wallet_type.startswith("SOL"):
-            target_asset = Wallet.Asset.SOL
-        elif requested_wallet_type in [choice[0] for choice in Wallet.Asset.choices]:
-            target_asset = requested_wallet_type
-        elif requested_wallet_type == configured_plat_type:
-            target_asset = Wallet.Asset.USDT
-        else:
-            messages.error(request, "Please select a supported wallet option")
+        try:
+            target_asset, matched_rail = resolve_wallet_choice(raw_type)
+        except ValueError as exc:
+            messages.error(request, str(exc))
             return redirect("admin_user_create")
-
-        matched_rail = None
-        if ":" in raw_type:
-            matched_rail = PaymentRail.objects.filter(key__iexact=raw_type).first()
-        if not matched_rail:
-            matched_rail = (
-                PaymentRail.objects.filter(key__iexact=requested_wallet_type).first()
-                or PaymentRail.objects.filter(symbol__iexact=target_asset, is_active=True).first()
-                or PaymentRail.objects.filter(symbol__iexact=target_asset).first()
-            )
 
         if not wallet_address or len(wallet_address) > 150:
             messages.error(request, "A valid wallet address is required")
@@ -359,6 +385,8 @@ def admin_user_create(request):
         "platform": PlatformSettings.load(),
         "rails": PaymentRail.objects.all().order_by("display_order", "key"),
         "wallet_assets": Wallet.Asset.choices,
+        "selected_wallet_type": "USDT:TRC20",
+        "wallet_values": WALLET_VALUES,
     }
     return render(request, "admin-user-form.html", context)
 
@@ -415,6 +443,16 @@ def admin_user_edit(request, id):
             messages.error(request, "Enter a valid account balance")
             return redirect("admin_user_edit", id=id)
 
+        raw_type = (form.get("wallet-type") or "").strip()
+        target_asset = account.account_type
+        matched_rail = account.preferred_rail
+        if raw_type:
+            try:
+                target_asset, matched_rail = resolve_wallet_choice(raw_type)
+            except ValueError as exc:
+                messages.error(request, str(exc))
+                return redirect("admin_user_edit", id=id)
+
         with transaction.atomic():
             user = User.objects.select_for_update().get(pk=user.pk)
             account = Account.objects.select_for_update().get(pk=account.pk)
@@ -423,7 +461,9 @@ def admin_user_edit(request, id):
             user.email = email
             user.save(update_fields=["first_name", "last_name", "email"])
             account.balance = wallet_balance
-            account.save(update_fields=["balance"])
+            account.account_type = target_asset
+            account.preferred_rail = matched_rail
+            account.save(update_fields=["balance", "account_type", "preferred_rail"])
             add_audit_log(request, "Edited user", user.username)
         return redirect("admin_users_view")
 
@@ -431,6 +471,10 @@ def admin_user_edit(request, id):
         "user" : user,
         "account" : account,
         "edit" : True,
+        "selected_wallet_type" : (
+            account.preferred_rail.key if account.preferred_rail else account.account_type
+        ),
+        "wallet_values" : WALLET_VALUES,
     }
 
     return render(request, "admin-user-form.html", context)
@@ -637,17 +681,37 @@ def approve_deposit(request, id):
             if normalized_hash
             else False
         )
+        network_ok = valid_wallet_type(deposit.wallet_type, platform)
+        hash_ok = valid_tx_hash(deposit.tx_hash)
+        amount_ok = deposit.amount.is_finite() and deposit.amount > 0
+        if deposit.rail_id:
+            network_ok = True
+            hash_ok = valid_txid(deposit.rail.key, deposit.tx_hash) or valid_tx_hash(deposit.tx_hash)
+            entry = catalog_entry(deposit.rail.key)
+            min_dep = deposit.rail.min_deposit
+            max_dep = deposit.rail.max_deposit
+            if entry:
+                if min_dep is None and entry.get("min_deposit"):
+                    min_dep = Decimal(entry["min_deposit"])
+                if max_dep is None and entry.get("max_deposit"):
+                    max_dep = Decimal(entry["max_deposit"])
+            if min_dep is not None and deposit.amount < min_dep:
+                amount_ok = False
+            if max_dep is not None and deposit.amount > max_dep:
+                amount_ok = False
         if deposit.status == "PENDING" and (
-            not valid_wallet_type(deposit.wallet_type, platform)
-            or not valid_tx_hash(deposit.tx_hash)
-            or not deposit.amount.is_finite()
-            or deposit.amount <= 0
+            not network_ok
+            or not hash_ok
+            or not amount_ok
             or duplicate_hash
         ):
             messages.error(request, "Deposit network, amount, or transaction hash is invalid")
             return redirect("admin_deposits")
         if deposit.status == "PENDING":
-            account = Account.objects.select_for_update().get(user=deposit.user)
+            account = Account.objects.select_for_update().filter(user=deposit.user).first()
+            if account is None:
+                messages.error(request, "This user has no wallet account to credit")
+                return redirect("admin_deposits")
             pending_transaction = pending_financial_transaction(
                 deposit.user,
                 deposit.id,

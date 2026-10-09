@@ -23,6 +23,9 @@
       <div>
         <h1>Deposits</h1>
         <p>Verify deposit requests and credit user wallets.</p>
+        {% for message in messages %}
+          {{message}}
+        {% endfor %}
       </div>
       <span class="tag gold">{{ pending_count }} pending</span>
     </div>
