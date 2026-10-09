@@ -1,7 +1,7 @@
 from functools import wraps
 from django.contrib.auth import logout, update_session_auth_hash
 from django.shortcuts import render, redirect, get_object_or_404
-from core.models import User, Withdrawal, Account, Packages, userPackage, InvestmentPayout, Support, Transaction, Deposit, Referral, PlatformSettings
+from core.models import User, Withdrawal, Account, Packages, userPackage, InvestmentPayout, Support, Transaction, Deposit, Referral, PlatformSettings, Wallet
 from core.currency import get_rates, to_coin
 from django.contrib import messages
 from django.db import IntegrityError, transaction
@@ -13,6 +13,7 @@ import json
 import re
 
 MAX_FINANCIAL_AMOUNT = Decimal("9999999999999999.99")
+WALLET_ASSET_ORDER = ["USDT", "ETH", "BTC", "SOL"]
 
 
 def prices_json(rates):
@@ -23,6 +24,25 @@ def normalized_wallet_type(value):
 
 def normalized_tx_hash(value):
     return value.strip().upper()
+
+
+def ensure_user_wallets(user):
+    existing_assets = set(
+        Wallet.objects.filter(user=user).values_list("asset", flat=True)
+    )
+    created_wallets = [
+        Wallet(user=user, asset=asset, is_active=(asset == "USDT"))
+        for asset in WALLET_ASSET_ORDER
+        if asset not in existing_assets
+    ]
+    if created_wallets:
+        Wallet.objects.bulk_create(created_wallets, ignore_conflicts=True)
+
+    wallets = list(Wallet.objects.filter(user=user, asset__in=WALLET_ASSET_ORDER))
+    if wallets and not any(wallet.is_active for wallet in wallets):
+        Wallet.objects.filter(pk=wallets[0].pk).update(is_active=True)
+        wallets[0].is_active = True
+    return sorted(wallets, key=lambda wallet: WALLET_ASSET_ORDER.index(wallet.asset))
 
 
 def active_login_required(view):
@@ -59,6 +79,41 @@ def dashboard_view(request):
     }
      
     return render(request, "dashboard.html", context)
+
+
+@active_login_required
+def wallets(request):
+    if request.method == "POST":
+        selected_asset = normalized_wallet_type(request.POST.get("asset", ""))
+        if selected_asset in WALLET_ASSET_ORDER:
+            ensure_user_wallets(request.user)
+            with transaction.atomic():
+                Wallet.objects.select_for_update().filter(user=request.user).update(
+                    is_active=False
+                )
+                Wallet.objects.select_for_update().filter(
+                    user=request.user,
+                    asset=selected_asset,
+                ).update(is_active=True)
+            messages.success(request, f"{selected_asset} wallet selected")
+        else:
+            messages.error(request, "Select a supported wallet")
+        return redirect("wallets")
+
+    wallet_list = ensure_user_wallets(request.user)
+    active_wallet = next(
+        (wallet for wallet in wallet_list if wallet.is_active),
+        wallet_list[0] if wallet_list else None,
+    )
+    total_balance = sum((wallet.balance for wallet in wallet_list), Decimal("0"))
+
+    context = {
+        "wallets": wallet_list,
+        "active_wallet": active_wallet,
+        "total_balance": total_balance,
+        "supported_assets": WALLET_ASSET_ORDER,
+    }
+    return render(request, "wallets.html", context)
 
 @active_login_required
 def withdraw(request):

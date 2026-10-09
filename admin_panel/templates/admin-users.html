@@ -27,12 +27,14 @@
           {{message}}
         {% endfor %}
       </div>
-      <a href="{% url "admin_user_create" %}" class="btn btn-gold">＋ Create User</a>
+      <a href="{% url "admin_user_create" %}" class="btn btn-gold">+ Create User</a>
     </div>
 
 <div class="toolbar">
         <div class="search">
-          <span class="s-ico">⌕</span>
+          <span class="s-ico">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </span>
           <input id="userSearch" type="text" placeholder="Search by name, username or email…">
         </div>
       </div>
@@ -57,21 +59,23 @@
                     <td>${{user.balance}}</td>
                     <td>{{user.account_type}}</td>
                   <td>  {% if user.user.is_active %}<span class="tag green">Active</span>{% else %}<span class="tag red">Disabled</span>{% endif %}</td>
-                  <td>{{ user.user.date_joined|date:"d/m/Y" }}</td>
-                  <td>
-                    <div class="act-row">
-                      <a href="{% url "user_edit" user.user.user_id %}" class="act-btn" title="Edit">✎</a>
-                      {% if user.user.is_active %}
-                        <form method="post" action="{% url "user_toggle_activity" user.user.user_id %}">
-                          {% csrf_token %}
-                          <button type="submit" class="act-btn red" title="Disable">X</button>
-                        </form>
-                      {% else %}
-                        <form method="post" action="{% url "user_toggle_activity" user.user.user_id %}">
-                          {% csrf_token %}
-                          <button type="submit" class="act-btn green" title="Enable">✓</button>
-                        </form>
-                      {% endif %}
+                    <td>{{ user.user.date_joined|date:"d/m/Y" }}</td>
+                    <td>
+                      <div class="act-row">
+                        <a href="{% url "user_edit" user.user.user_id %}" class="act-btn" title="Edit">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </a>
+                        {% if user.user.is_active %}
+                          <form method="post" action="{% url "user_toggle_activity" user.user.user_id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="act-btn red" title="Disable">Disable</button>
+                          </form>
+                        {% else %}
+                          <form method="post" action="{% url "user_toggle_activity" user.user.user_id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="act-btn green" title="Enable">Enable</button>
+                          </form>
+                        {% endif %}
                       <form class="del-form" action="{% url "user_delete" user.user.user_id %}" method="post" id="form-{{user.user.user_id}}">
                         {% csrf_token %}
                          <button type="submit" class="act-btn danger del-btn" title="Deactivate" id="{{user.user.user_id}}">⊘</button>

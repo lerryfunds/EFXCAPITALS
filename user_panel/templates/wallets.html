@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallets - EFXCAPITALS</title>
+<link rel="icon" type="image/svg+xml" href="{% static "images/favicon.svg" %}">
+<link rel="stylesheet" href="{% static "css/style.css" %}">
+<link rel="stylesheet" href="{% static "css/app.css" %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+{% include "dashboard_header.html" %}
+
+<div class="app-body">
+  {% include "aside.html" %}
+
+  <main class="content wallet-page">
+    <div class="page-head">
+      <div>
+        <h1>Wallets</h1>
+        <p>Select an active wallet, review balances, and share the right deposit address.</p>
+      </div>
+      <span class="tag gold">{{ supported_assets|length }} supported assets</span>
+    </div>
+
+    {% if messages %}
+      <div class="message-stack">
+        {% for message in messages %}
+          <div class="inline-message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <section class="wallet-hero">
+      <div class="wallet-summary">
+        <span class="wallet-kicker">Active wallet</span>
+        {% if active_wallet %}
+          <h2>{{ active_wallet.asset }}</h2>
+          <p>{{ active_wallet.balance|floatformat:8 }} {{ active_wallet.asset }}</p>
+          <small>Combined tracked balance: {{ total_balance|floatformat:8 }}</small>
+        {% else %}
+          <h2>No wallet</h2>
+          <p>Wallets will appear after account setup.</p>
+        {% endif %}
+      </div>
+
+      <div class="wallet-address-card">
+        <span class="wallet-kicker">Deposit address</span>
+        {% if active_wallet and active_wallet.address %}
+          <address>{{ active_wallet.address }}</address>
+        {% else %}
+          <address>No address configured yet. You can link one in settings or during deposit.</address>
+        {% endif %}
+        <div class="qr-placeholder" aria-label="QR code placeholder">
+          <span>QR</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel wallet-selector-panel">
+      <div class="panel-head">
+        <h3>Choose Currency</h3>
+        <span class="tag grey">USDT, ETH, BTC, SOL</span>
+      </div>
+
+      <form method="post" class="wallet-switcher">
+        {% csrf_token %}
+        {% for wallet in wallets %}
+          <button class="wallet-toggle {% if wallet.is_active %}selected{% endif %}" type="submit" name="asset" value="{{ wallet.asset }}">
+            <span class="asset-badge">{{ wallet.asset|slice:":1" }}</span>
+            <span>
+              <b>{{ wallet.asset }}</b>
+              <small>{{ wallet.balance|floatformat:8 }} {{ wallet.asset }}</small>
+            </span>
+          </button>
+        {% endfor %}
+      </form>
+    </section>
+
+    <section class="wallet-list">
+      {% for wallet in wallets %}
+        <article class="wallet-row {% if wallet.is_active %}active{% endif %}">
+          <div>
+            <span class="asset-badge">{{ wallet.asset|slice:":1" }}</span>
+          </div>
+          <div class="wallet-row-main">
+            <b>{{ wallet.get_asset_display }}</b>
+            <small>{{ wallet.asset }} wallet {% if wallet.is_active %}- active{% endif %}</small>
+          </div>
+          <div class="wallet-row-balance">
+            <b>{{ wallet.balance|floatformat:8 }}</b>
+            <small>{{ wallet.asset }}</small>
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+  </main>
+</div>
+
+</body>
+</html>

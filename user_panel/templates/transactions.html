@@ -68,7 +68,7 @@
               <td><span class="tag {% if t.status == 'COMPLETED' %}green{% elif t.status == 'PENDING' %}gold{% else %}red{% endif %}">{{ t.status|title }}</span></td>
             </tr>
             {% empty %}
-            <tr><td colspan="6"><div class="empty">No transactions yet.</div></td></tr>
+            <tr><td colspan="6"><div class="empty">No transactions recorded yet. Deposits, profit credits, and withdrawals will appear here as they occur.</div></td></tr>
             {% endfor %}
           </tbody>
         </table>

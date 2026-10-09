@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db.models import Avg, Count, Max, Min, F
 from django.db import IntegrityError, transaction
 from decimal import Decimal
-from .models import Account, Packages, Referral, Transaction, PlatformSettings
+from .models import Account, Packages, Referral, Transaction, PlatformSettings, PaymentRail, Wallet
 from .currency import get_rates
 
 User = get_user_model()
@@ -81,7 +81,8 @@ def register_view(request):
 
         username = form.get("username", "").strip()
         email = form.get("email", "").strip()
-        requested_wallet_type = form.get("wallet-type", "").strip().upper()
+        raw_type = (form.get("wallet-type") or form.get("rail") or form.get("asset") or "").strip()
+        requested_wallet_type = raw_type.upper()
         wallet_address = form.get("address", "").strip()
         phone_number = form.get("whatsapp-number", "").strip()
         password = form.get("password", "")
@@ -100,9 +101,39 @@ def register_view(request):
         ):
             messages.error(request, "One or more account fields are too long")
             return redirect("register")
-        if requested_wallet_type != platform.wallet_type.strip().upper():
+
+        configured_plat_type = platform.wallet_type.strip().upper()
+        if configured_plat_type not in ["USDT", ""] and requested_wallet_type != configured_plat_type:
             messages.error(request, f"Accounts are currently limited to {platform.wallet_type}")
             return redirect("register")
+
+        # Map selected option to target Wallet.Asset
+        if requested_wallet_type.startswith("USDT") or requested_wallet_type in ["TRON", "TRC20", "BEP20", "ERC20"]:
+            target_asset = Wallet.Asset.USDT
+        elif requested_wallet_type.startswith("ETH"):
+            target_asset = Wallet.Asset.ETH
+        elif requested_wallet_type.startswith("BTC"):
+            target_asset = Wallet.Asset.BTC
+        elif requested_wallet_type.startswith("SOL"):
+            target_asset = Wallet.Asset.SOL
+        elif requested_wallet_type in [choice[0] for choice in Wallet.Asset.choices]:
+            target_asset = requested_wallet_type
+        elif requested_wallet_type == configured_plat_type:
+            target_asset = Wallet.Asset.USDT
+        else:
+            messages.error(request, "Please select a supported wallet option")
+            return redirect("register")
+
+        matched_rail = None
+        if ":" in raw_type:
+            matched_rail = PaymentRail.objects.filter(key__iexact=raw_type).first()
+        if not matched_rail:
+            matched_rail = (
+                PaymentRail.objects.filter(key__iexact=requested_wallet_type).first()
+                or PaymentRail.objects.filter(symbol__iexact=target_asset, is_active=True).first()
+                or PaymentRail.objects.filter(symbol__iexact=target_asset).first()
+            )
+
         if not wallet_address:
             messages.error(request, "Wallet address is required")
             return redirect("register")
@@ -120,7 +151,8 @@ def register_view(request):
         try:
             with transaction.atomic():
                 platform = PlatformSettings.objects.select_for_update().get(pk=1)
-                if requested_wallet_type != platform.wallet_type.strip().upper():
+                configured_plat_type = platform.wallet_type.strip().upper()
+                if configured_plat_type not in ["USDT", ""] and requested_wallet_type != configured_plat_type:
                     messages.error(request, f"Accounts are currently limited to {platform.wallet_type}")
                     return redirect("register")
                 if (
@@ -142,9 +174,20 @@ def register_view(request):
 
                 Account.objects.create(
                     user=user,
-                    account_type=platform.wallet_type.strip().upper(),
+                    account_type=target_asset,
                     wallet_address=wallet_address,
+                    preferred_rail=matched_rail,
                 )
+
+                # Initialize all 4 Wallet asset accounts for user, activating and assigning address to chosen asset
+                for asset_choice in [Wallet.Asset.USDT, Wallet.Asset.ETH, Wallet.Asset.BTC, Wallet.Asset.SOL]:
+                    Wallet.objects.create(
+                        user=user,
+                        asset=asset_choice,
+                        address=wallet_address if asset_choice == target_asset else "",
+                        balance=Decimal("0"),
+                        is_active=(asset_choice == target_asset),
+                    )
 
                 if ref_code:
                     referrer_account = (
@@ -180,7 +223,12 @@ def register_view(request):
             return redirect("register")
         return redirect("login")
 
-    return render(request, "register.html", {"platform": PlatformSettings.load()})
+    context = {
+        "platform": PlatformSettings.load(),
+        "rails": PaymentRail.objects.all().order_by("display_order", "key"),
+        "wallet_assets": Wallet.Asset.choices,
+    }
+    return render(request, "register.html", context)
 
 
 def logout_view(request):

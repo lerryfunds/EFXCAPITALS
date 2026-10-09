@@ -72,15 +72,13 @@
   <div class="hero-bg"></div>
   <div class="container hero-grid">
     <div class="hero-copy">
-      <h1>Your Money <br> Your Growth <br> Your Future</h1>
+      <h1>Grow your crypto with transparent, fixed-cycle packages.</h1>
       <p>
-        EFXCAPITALS connects your users to structured investment
-        packages with interval-based tracked profits, wallet-based funding, and clean
-        focused workflows across web and mobile.
+        EFXCAPITALS gives you direct control over your investments: fund your account, choose a verified growth tier, watch daily earnings accumulate, and withdraw straight to your personal crypto wallet.
       </p>
       <div class="hero-actions">
-        <a href="{% url "register" %}" class="btn btn-gold btn-lg">{% if active_package_count %}Start Earning Now{% else %}Create Free Account{% endif %} <span class="arrow">→</span></a>
-        <a href="{% url "login" %}" class="btn btn-ghost btn-lg"><span class="play">▶</span> Monitor Account</a>
+        <a href="{% url "register" %}" class="btn btn-gold btn-lg">Create Account</a>
+        <a href="{% url "login" %}" class="btn btn-ghost btn-lg">Open Dashboard</a>
       </div>
       <div class="hero-stats">
         <div class="stat"><b>{{ active_package_count }}</b><span>Live Packages</span></div>
@@ -121,39 +119,51 @@
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">Why EFXCAPITALS</span>
-      <h2>Everything you need to invest<br>with confidence</h2>
-      <p>Clean onboarding, wallet-based investing, tracked withdrawals, referral logic, and admin-side controls in one focused investment workflow.</p>
+      <h2>Smart, transparent crypto growth plans</h2>
+      <p>Clean balance tracking, set daily profit cycles, and direct withdrawals straight to your personal wallet.</p>
     </div>
     <div class="features-grid">
       <div class="feature-card">
-        <span class="f-icon">▦</span>
-        <h3>Real Package Configuration</h3>
-        <p>Plans, cycles, discount windows, referral rules, and limits are managed from your own admin data, not hardcoded into the page.</p>
+        <span class="f-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        </span>
+        <h3>Predictable Daily Returns</h3>
+        <p>Choose fixed-cycle packages with set interest schedules. Track your accumulated profits in real time.</p>
       </div>
       <div class="feature-card">
-        <span class="f-icon">⟁</span>
-        <h3>Configured Deposit Workflow</h3>
-        <p>Users can submit deposits with transaction hash and proof, while admin can review, approve, reject, and keep the evidence visible on both sides.</p>
+        <span class="f-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path></svg>
+        </span>
+        <h3>Direct Payout Releases</h3>
+        <p>Withdraw earnings directly to your preferred TRC-20, BEP-20, Bitcoin, or Solana address with zero hidden deductions.</p>
       </div>
       <div class="feature-card">
-        <span class="f-icon">⛨</span>
-        <h3>Controlled Access</h3>
-        <p>Separate user and admin auth flows, account status controls, and action audit notifications keep operations tighter and easier to manage.</p>
+        <span class="f-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </span>
+        <h3>Protected Accounts</h3>
+        <p>Robust account authentication, transparent transaction logs, and verified security checks for withdrawals.</p>
       </div>
       <div class="feature-card">
-        <span class="f-icon">▤</span>
-        <h3>Mobile-Ready Screens</h3>
-        <p>The landing page and core app flows are laid out to stay usable on narrow screens instead of shrinking desktop UI into unreadable blocks.</p>
+        <span class="f-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+        </span>
+        <h3>Built for Mobile First</h3>
+        <p>Check daily yields, submit deposit hashes, and request payouts easily from your phone or desktop.</p>
       </div>
       <div class="feature-card">
-        <span class="f-icon">⚡</span>
-        <h3>Fast Activation Flow</h3>
-        <p>Users can sign up, log in, fund the wallet, and activate a package with minimal friction through the existing wallet-balance investment flow.</p>
+        <span class="f-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        </span>
+        <h3>Instant Account Setup</h3>
+        <p>Sign up in under sixty seconds, pick your payout network, and start earning from your very first package cycle.</p>
       </div>
       <div class="feature-card">
-        <span class="f-icon">♜</span>
-        <h3>Live Admin Management</h3>
-        <p>Packages, wallets, users, withdrawals, deposits, notifications, and settings are manageable directly from the admin panel without code edits.</p>
+        <span class="f-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M14.8 9A2 2 0 0 0 13 8h-2a2 2 0 1 0 0 4h2a2 2 0 0 1 0 4h-2a2 2 0 0 1-1.8-1"></path><path d="M12 6v2m0 8v2"></path></svg>
+        </span>
+        <h3>Live Market Rates</h3>
+        <p>Up-to-date valuations on USDT, Bitcoin, Ethereum, and Solana so you always know the exact USD equivalent of your balance.</p>
       </div>
     </div>
   </div>
@@ -163,30 +173,30 @@
 <section class="section section-alt" id="how-it-works">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Simple Process</span>
-      <h2>Start earning in 4 easy steps</h2>
-      <p>From account creation to package activation, the path stays short and understandable.</p>
+      <span class="eyebrow">How It Works</span>
+      <h2>Start earning in 4 straightforward steps</h2>
+      <p>From your first deposit to your first payout, the entire process takes just minutes.</p>
     </div>
     <div class="steps-grid">
       <div class="step">
         <span class="step-num">1</span>
-        <h3>Create Account</h3>
-        <p>Register and access your dashboard directly without waiting for signup email verification.</p>
+        <h3>Create Your Account</h3>
+        <p>Register with your basic details and select your preferred payout coin and network.</p>
       </div>
       <div class="step">
         <span class="step-num">2</span>
-        <h3>Deposit</h3>
-            <p>Submit a deposit request with the configured network, transaction hash, and amount.</p>
+        <h3>Fund Your Wallet</h3>
+        <p>Send your chosen cryptocurrency to the designated deposit address and paste your transaction hash.</p>
       </div>
       <div class="step">
         <span class="step-num">3</span>
-        <h3>Choose a Package</h3>
-        <p>Pick one of the active packages configured in your admin panel and review its live limits.</p>
+        <h3>Pick an Investment Plan</h3>
+        <p>Select a package that matches your target budget and daily return goals to start your earning cycles.</p>
       </div>
       <div class="step">
         <span class="step-num">4</span>
-        <h3>Track &amp; Withdraw</h3>
-        <p>Monitor wallet balance, profit releases, transaction history, and withdrawals from one place.</p>
+        <h3>Collect Your Payouts</h3>
+        <p>Watch daily returns accumulate in your dashboard and request withdrawals directly to your wallet.</p>
       </div>
     </div>
   </div>
@@ -279,30 +289,38 @@
 <section class="section" id="privacy">
   <div class="container">
     <div class="section-head">
-      <span class="eyebrow">Privacy Policy</span>
-      <h2>Your data, your rights</h2>
-      <p>Users should be able to understand trust signals quickly, especially on mobile.</p>
+      <span class="eyebrow">Security &amp; Trust</span>
+      <h2>Built with security at every layer</h2>
+      <p>Clear safeguards to protect your assets and maintain transparent trading operations.</p>
     </div>
     <div class="privacy-grid">
       <div class="privacy-card">
-        <span class="p-icon">⛨</span>
+        <span class="p-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </span>
         <h3>Protected Accounts</h3>
-        <p>Authentication, session handling, and account role separation are already built into the application.</p>
+        <p>Industry-standard password encryption, multi-layered session handling, and strict role authentication safeguards.</p>
       </div>
       <div class="privacy-card">
-        <span class="p-icon">⌁</span>
-          <h3>Review-Based Operations</h3>
-          <p>Deposits and withdrawals retain reviewable transaction records so operational actions are easier to validate later.</p>
+        <span class="p-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </span>
+        <h3>Verifiable Transactions</h3>
+        <p>Every deposit, yield credit, and withdrawal generates a timestamped transaction record available in your dashboard.</p>
       </div>
       <div class="privacy-card">
-        <span class="p-icon">▤</span>
+        <span class="p-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        </span>
         <h3>Transparent Package Rules</h3>
-        <p>Plan durations, cycle counts, ROI ranges, discounts, and referral gates are visible through package configuration rather than hidden logic.</p>
+        <p>Plan durations, cycle counts, and ROI ranges are clearly defined up front so you never encounter surprise rules or hidden fees.</p>
       </div>
       <div class="privacy-card">
-        <span class="p-icon">♜</span>
-        <h3>Managed Platform Controls</h3>
-        <p>Operational details like support contacts and withdrawal thresholds stay organized through centralized platform controls.</p>
+        <span class="p-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </span>
+        <h3>Dedicated Oversight</h3>
+        <p>Direct administrative review on payouts and deposit hashes guarantees wallet reconciliations stay accurate and secure.</p>
       </div>
     </div>
   </div>

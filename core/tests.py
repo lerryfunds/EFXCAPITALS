@@ -7,8 +7,9 @@ from django.utils import timezone
 from datetime import timedelta
 from unittest import mock
 import os
-from core.models import Account, Referral, Transaction, Support, CryptoRate, Packages, PlatformSettings, userPackage, InvestmentPayout
+from core.models import Account, Referral, Transaction, Support, CryptoRate, Packages, PlatformSettings, userPackage, InvestmentPayout, PaymentRail, legacy_rail_for_symbol, Wallet
 from core.currency import get_rates, convert, to_coin
+from core.rails import (RAIL_CATALOG, catalog_entry, valid_address, valid_txid, DEFAULT_MIN_DEPOSIT, DEFAULT_MIN_WITHDRAW, LEGACY_PREFIX)
 from decimal import Decimal
 
 User = get_user_model()
@@ -126,6 +127,102 @@ class RegistrationTest(TestCase):
         referrer_account.refresh_from_db()
         self.assertEqual(referrer_account.balance, Decimal("25.00"))
         self.assertEqual(Transaction.objects.filter(user=referrer_user, tx_type="REFERRAL").count(), 1)
+
+    def test_register_creates_wallets_and_activates_chosen_asset(self):
+        c = Client()
+        r = c.post("/register/", {
+            "full_name": "Alice Smith",
+            "username": "alicesmith",
+            "email": "alice@example.com",
+            "address": "0x" + "3" * 40,
+            "wallet-type": "USDT",
+            "password": "secret123",
+            "c_password": "secret123",
+        })
+        self.assertEqual(r.status_code, 302)
+        user = User.objects.get(username="alicesmith")
+        wallets = list(Wallet.objects.filter(user=user))
+        self.assertEqual(len(wallets), 4)
+
+        usdt_wallet = Wallet.objects.get(user=user, asset="USDT")
+        self.assertTrue(usdt_wallet.is_active)
+        self.assertEqual(usdt_wallet.address, "0x" + "3" * 40)
+
+        for other_asset in ["ETH", "BTC", "SOL"]:
+            other_wallet = Wallet.objects.get(user=user, asset=other_asset)
+            self.assertFalse(other_wallet.is_active)
+            self.assertEqual(other_wallet.address, "")
+
+    def test_register_with_usdt_trc20_network(self):
+        c = Client()
+        trc20_addr = "T" + "1" * 33
+        r = c.post("/register/", {
+            "full_name": "Tron User",
+            "username": "tronuser",
+            "email": "tron@example.com",
+            "address": trc20_addr,
+            "wallet-type": "USDT:TRC20",
+            "password": "secret123",
+            "c_password": "secret123",
+        })
+        self.assertEqual(r.status_code, 302)
+        user = User.objects.get(username="tronuser")
+        account = Account.objects.get(user=user)
+        self.assertEqual(account.preferred_rail.key, "USDT:TRC20")
+        usdt_wallet = Wallet.objects.get(user=user, asset="USDT")
+        self.assertTrue(usdt_wallet.is_active)
+        self.assertEqual(usdt_wallet.address, trc20_addr)
+
+    def test_register_with_usdt_bep20_network(self):
+        c = Client()
+        bep20_addr = "0x" + "4" * 40
+        r = c.post("/register/", {
+            "full_name": "Bsc User",
+            "username": "bscuser",
+            "email": "bsc@example.com",
+            "address": bep20_addr,
+            "wallet-type": "USDT:BEP20",
+            "password": "secret123",
+            "c_password": "secret123",
+        })
+        self.assertEqual(r.status_code, 302)
+        user = User.objects.get(username="bscuser")
+        account = Account.objects.get(user=user)
+        self.assertEqual(account.preferred_rail.key, "USDT:BEP20")
+        usdt_wallet = Wallet.objects.get(user=user, asset="USDT")
+        self.assertTrue(usdt_wallet.is_active)
+        self.assertEqual(usdt_wallet.address, bep20_addr)
+
+    def test_register_with_btc_asset(self):
+        c = Client()
+        btc_addr = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+        r = c.post("/register/", {
+            "full_name": "Bitcoin User",
+            "username": "btcuser",
+            "email": "btc@example.com",
+            "address": btc_addr,
+            "wallet-type": "BTC",
+            "password": "secret123",
+            "c_password": "secret123",
+        })
+        self.assertEqual(r.status_code, 302)
+        user = User.objects.get(username="btcuser")
+        btc_wallet = Wallet.objects.get(user=user, asset="BTC")
+        self.assertTrue(btc_wallet.is_active)
+        self.assertEqual(btc_wallet.address, btc_addr)
+        usdt_wallet = Wallet.objects.get(user=user, asset="USDT")
+        self.assertFalse(usdt_wallet.is_active)
+
+    def test_signup_page_renders_usdt_and_wallet_options(self):
+        c = Client()
+        r = c.get("/register/")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "USDT (Tron TRC-20)")
+        self.assertContains(r, "USDT (BNB Smart Chain BEP-20)")
+        self.assertContains(r, "Bitcoin (BTC)")
+        self.assertContains(r, "Ethereum (ETH)")
+        self.assertContains(r, "Solana (SOL)")
+
 
 
 class RegistrationSafetyTest(TestCase):
@@ -418,3 +515,169 @@ class CurrencyTest(TestCase):
         self.assertEqual(convert("SOL", Decimal("2")), Decimal("300.00"))
         self.assertEqual(to_coin("BTC", Decimal("30000")), Decimal("0.5"))
         self.assertIsNone(convert("DOGE", Decimal("1")))
+
+
+class RailCatalogTest(TestCase):
+    def test_catalog_contains_the_five_seeded_rails(self):
+        self.assertEqual(
+            set(RAIL_CATALOG),
+            {"USDT:TRC20", "USDT:BEP20", "BTC", "ETH", "SOL"},
+        )
+
+    def test_every_entry_declares_the_fields_the_code_relies_on(self):
+        for key, entry in RAIL_CATALOG.items():
+            with self.subTest(rail=key):
+                self.assertEqual(entry["symbol"], key.split(":")[0])
+                self.assertTrue(entry["network"])
+                self.assertTrue(entry["label"])
+                self.assertTrue(entry["coin_id"])
+                self.assertTrue(entry["address_re"])
+                self.assertTrue(entry["txid_re"])
+                self.assertGreaterEqual(entry["coin_decimals"], 0)
+                for low, high in (("min_deposit", "max_deposit"), ("min_withdraw", "max_withdraw")):
+                    self.assertLessEqual(Decimal(entry[low]), Decimal(entry[high]))
+
+    def test_catalog_entry_returns_none_for_an_unknown_key(self):
+        self.assertIsNone(catalog_entry("DOGE:ERC20"))
+        self.assertIsNone(catalog_entry(""))
+
+    def test_legacy_key_has_no_catalog_entry(self):
+        self.assertIsNone(catalog_entry(f"{LEGACY_PREFIX}TRON"))
+
+    def test_none_key_has_no_catalog_entry(self):
+        self.assertIsNone(catalog_entry(None))
+
+
+class RailValidationTest(TestCase):
+    def test_tron_accepts_a_34_char_base58_address(self):
+        self.assertTrue(valid_address("USDT:TRC20", "T" + "1" * 33))
+
+    def test_tron_rejects_a_33_char_address(self):
+        self.assertFalse(valid_address("USDT:TRC20", "T" + "1" * 32))
+
+    def test_bep20_rejects_a_tron_address(self):
+        self.assertFalse(valid_address("USDT:BEP20", "T" + "1" * 33))
+
+    def test_eth_accepts_a_lowercase_0x_address(self):
+        self.assertTrue(valid_address("ETH", "0x" + "a" * 40))
+
+    def test_btc_accepts_p2pkh_and_bech32(self):
+        self.assertTrue(valid_address("BTC", "1" + "a" * 33))
+        self.assertTrue(valid_address("BTC", "bc1q" + "a" * 38))
+
+    def test_btc_base58_addresses_still_match(self):
+        self.assertTrue(valid_address("BTC", "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"))
+        self.assertTrue(valid_address("BTC", "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"))
+
+    def test_btc_bech32_length_bounds(self):
+        p2wpkh = "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq"  # 42 chars
+        taproot = "bc1pqqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0sagmhkq"  # 62 chars
+        self.assertTrue(valid_address("BTC", p2wpkh))
+        self.assertTrue(valid_address("BTC", taproot))
+        self.assertFalse(valid_address("BTC", p2wpkh[:-1]))
+        self.assertFalse(valid_address("BTC", taproot + "q"))
+
+    def test_sol_address_length_bounds(self):
+        self.assertFalse(valid_address("SOL", "1" * 31))
+        self.assertTrue(valid_address("SOL", "1" * 32))
+        self.assertFalse(valid_address("SOL", "1" * 45))
+
+    def test_empty_address_is_never_valid(self):
+        for key in RAIL_CATALOG:
+            with self.subTest(rail=key):
+                self.assertFalse(valid_address(key, ""))
+                self.assertFalse(valid_address(key, "   "))
+
+    def test_unknown_and_legacy_keys_never_validate(self):
+        self.assertFalse(valid_address("DOGE:ERC20", "T" + "1" * 33))
+        self.assertFalse(valid_address(f"{LEGACY_PREFIX}TRON", "T" + "1" * 33))
+        self.assertFalse(valid_txid("DOGE:ERC20", "a" * 64))
+        self.assertFalse(valid_txid(f"{LEGACY_PREFIX}TRON", "a" * 64))
+
+    def test_txid_formats_are_rail_specific(self):
+        self.assertTrue(valid_txid("USDT:TRC20", "a" * 64))
+        self.assertFalse(valid_txid("USDT:TRC20", "0x" + "a" * 64))
+        self.assertTrue(valid_txid("ETH", "0x" + "A" * 64))
+        self.assertFalse(valid_txid("ETH", "a" * 64))
+        self.assertTrue(valid_txid("BTC", "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"))
+        self.assertTrue(valid_txid("BTC", "a" * 64))
+        self.assertFalse(valid_txid("BTC", "0x" + "a" * 64))
+        self.assertTrue(valid_txid("SOL", "1" * 88))
+
+    def test_btc_txid_requires_exactly_64_hex_characters(self):
+        self.assertFalse(valid_txid("BTC", "z" * 64))
+        self.assertFalse(valid_txid("BTC", "z" * 32))
+        self.assertFalse(valid_txid("BTC", "a" * 63))
+        self.assertFalse(valid_txid("BTC", "a" * 65))
+        self.assertFalse(valid_txid("BTC", "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"))
+
+    def test_sol_txid_length_bounds(self):
+        self.assertTrue(valid_txid("SOL", "1" * 87))
+        self.assertTrue(valid_txid("SOL", "1" * 88))
+        self.assertFalse(valid_txid("SOL", "5" * 64))
+        self.assertFalse(valid_txid("SOL", "1" * 86))
+        self.assertFalse(valid_txid("SOL", "1" * 89))
+
+    def test_none_keys_and_values_never_validate(self):
+        self.assertFalse(valid_address(None, None))
+        self.assertFalse(valid_txid(None, None))
+        self.assertFalse(valid_address("BTC", None))
+        self.assertFalse(valid_txid("BTC", None))
+
+    def test_validators_strip_surrounding_whitespace(self):
+        self.assertTrue(valid_txid("ETH", "  0x" + "a" * 64 + "\n"))
+        self.assertTrue(valid_address("ETH", " 0x" + "a" * 40 + " "))
+
+
+class PaymentRailSeedTest(TestCase):
+    def test_migration_seeds_one_row_per_catalog_key(self):
+        self.assertEqual(PaymentRail.objects.count(), len(RAIL_CATALOG))
+        for key, entry in RAIL_CATALOG.items():
+            with self.subTest(rail=key):
+                rail = PaymentRail.objects.get(key=key)
+                self.assertEqual(rail.symbol, entry["symbol"])
+                self.assertEqual(rail.network, entry["network"])
+                self.assertEqual(rail.label, entry["label"])
+
+    def test_seeded_rails_are_inactive_and_have_no_address(self):
+        for rail in PaymentRail.objects.all():
+            with self.subTest(rail=rail.key):
+                self.assertFalse(rail.is_active)
+                self.assertEqual(rail.address, "")
+
+    def test_seeded_limits_are_null_so_the_catalog_defaults_apply(self):
+        for rail in PaymentRail.objects.all():
+            with self.subTest(rail=rail.key):
+                self.assertIsNone(rail.min_deposit)
+                self.assertIsNone(rail.max_deposit)
+                self.assertIsNone(rail.min_withdraw)
+                self.assertIsNone(rail.max_withdraw)
+
+    def test_every_non_legacy_row_has_a_catalog_key(self):
+        for rail in PaymentRail.objects.all():
+            with self.subTest(rail=rail.key):
+                if not rail.key.startswith(LEGACY_PREFIX):
+                    self.assertIn(rail.key, RAIL_CATALOG)
+
+    def test_rails_orders_by_display_order(self):
+        self.assertEqual(
+            list(PaymentRail.rails().values_list("key", flat=True)),
+            ["USDT:TRC20", "USDT:BEP20", "BTC", "ETH", "SOL"],
+        )
+
+    def test_active_rails_filters_inactive(self):
+        PaymentRail.objects.filter(key="ETH").update(is_active=True)
+        self.assertEqual(
+            list(PaymentRail.active_rails().values_list("key", flat=True)),
+            ["ETH"],
+        )
+
+    def test_str_is_the_label(self):
+        self.assertEqual(str(PaymentRail.objects.get(key="USDT:TRC20")), "USDT (Tron)")
+
+    def test_legacy_rail_is_never_active(self):
+        legacy = legacy_rail_for_symbol("TRON")
+        self.assertTrue(legacy.key.startswith(LEGACY_PREFIX))
+        self.assertFalse(legacy.is_active)
+        self.assertIsNone(catalog_entry(legacy.key))
+        self.assertNotIn(legacy, PaymentRail.active_rails())
