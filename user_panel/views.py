@@ -137,7 +137,7 @@ def withdraw(request):
     if not request.user.is_authenticated:
         return redirect("home")
 
-    account = get_object_or_404(Account, user = request.user)
+    account = get_object_or_404(Account, user=request.user)
     platform = PlatformSettings.load()
 
     if request.method == "POST":
@@ -148,11 +148,8 @@ def withdraw(request):
         address = form.get("address", "").strip()
         description = form.get("description", "").strip()
 
-        if wallet_type != normalized_wallet_type(platform.wallet_type):
-            messages.error(request, f"Withdrawals are only available in {platform.wallet_type}")
-            return redirect("withdraw")
-        if normalized_wallet_type(account.account_type) != normalized_wallet_type(platform.wallet_type):
-            messages.error(request, "Your account wallet type needs administrator review")
+        if not wallet_type:
+            messages.error(request, "Select a wallet/network type")
             return redirect("withdraw")
 
         if not address:
@@ -179,14 +176,7 @@ def withdraw(request):
             return redirect("withdraw")
 
         with transaction.atomic():
-            platform = PlatformSettings.objects.select_for_update().get(pk=1)
-            if wallet_type != normalized_wallet_type(platform.wallet_type):
-                messages.error(request, "Withdrawal settings changed; please try again")
-                return redirect("withdraw")
             locked_account = Account.objects.select_for_update().get(pk=account.pk)
-            if normalized_wallet_type(locked_account.account_type) != wallet_type:
-                messages.error(request, "Your account wallet type needs administrator review")
-                return redirect("withdraw")
             if amount > locked_account.balance:
                 messages.error(request, "ERROR: INSUFFICIENT FUNDS")
                 return redirect("withdraw")
@@ -213,11 +203,39 @@ def withdraw(request):
         return redirect("withdraw")
 
     prices = get_rates()
+    active_rails = PaymentRail.active_rails().filter(address__gt="")
+    withdrawal_options = []
+    if active_rails.exists():
+        for rail in active_rails:
+            withdrawal_options.append({
+                "key": rail.key,
+                "label": rail.label or rail.key,
+                "symbol": rail.symbol,
+            })
+    # Add platform/default type if not present
+    default_key = normalized_wallet_type(platform.wallet_type) or "USDT"
+    if not any(normalized_wallet_type(o["key"]) == default_key for o in withdrawal_options):
+        withdrawal_options.append({
+            "key": default_key,
+            "label": platform.wallet_type or default_key,
+            "symbol": default_key,
+        })
+    # Also add common types if not present
+    for extra in ["BTC", "ETH", "SOL", "USDC"]:
+        ek = normalized_wallet_type(extra)
+        if not any(normalized_wallet_type(o["key"]) == ek for o in withdrawal_options):
+            withdrawal_options.append({
+                "key": ek,
+                "label": ek,
+                "symbol": ek,
+            })
+
     context = {
-        "account" : account,
-        "prices" : prices,
-        "prices_json" : prices_json(prices),
+        "account": account,
+        "prices": prices,
+        "prices_json": prices_json(prices),
         "platform_wallet_type": platform.wallet_type,
+        "withdrawal_options": withdrawal_options,
     }
 
     return render(request, "withdraw.html", context)
@@ -486,11 +504,8 @@ def deposit(request):
             return redirect("deposit")
 
         # Legacy fallback: no active rail matched, use the single platform wallet
-        if (
-            requested != normalized_wallet_type(platform.wallet_type)
-            or normalized_wallet_type(account.account_type) != normalized_wallet_type(platform.wallet_type)
-        ):
-            messages.error(request, f"Deposits are only accepted in {platform.wallet_type}")
+        if not requested:
+            messages.error(request, "Select a network/wallet type")
             return redirect("deposit")
 
         if not platform.wallet_address:
@@ -518,10 +533,7 @@ def deposit(request):
         try:
             with transaction.atomic():
                 platform = PlatformSettings.objects.select_for_update().get(pk=1)
-                if (
-                    requested != normalized_wallet_type(platform.wallet_type)
-                    or not platform.wallet_address
-                ):
+                if not platform.wallet_address:
                     messages.error(request, "Deposit settings changed; please try again")
                     return redirect("deposit")
                 locked_user = User.objects.select_for_update().get(pk=request.user.pk)
@@ -529,9 +541,6 @@ def deposit(request):
                     pk=account.pk,
                     user=locked_user,
                 )
-                if normalized_wallet_type(locked_account.account_type) != requested:
-                    messages.error(request, "Your account wallet type needs administrator review")
-                    return redirect("deposit")
                 deposit = Deposit.objects.create(
                     user=locked_user,
                     amount=amount,
@@ -572,11 +581,25 @@ def deposit(request):
     else:
         options = []
         if platform.wallet_address:
+            pk = normalized_wallet_type(platform.wallet_type) or "USDT"
             options.append({
-                "key": normalized_wallet_type(platform.wallet_type) or "USDT",
+                "key": pk,
                 "label": platform.wallet_type,
-                "symbol": normalized_wallet_type(platform.wallet_type) or "USDT",
+                "symbol": pk,
                 "address": platform.wallet_address,
+                "min": None,
+                "max": None,
+            })
+    # Add extra options even if rails exist but missing common ones? Also ensure common ones are available
+    existing_keys = {normalized_wallet_type(o["key"]) for o in options}
+    for extra in ["BTC", "ETH", "SOL", "USDC", "USDT"]:
+        ek = normalized_wallet_type(extra)
+        if ek not in existing_keys:
+            options.append({
+                "key": ek,
+                "label": extra,
+                "symbol": ek,
+                "address": "",
                 "min": None,
                 "max": None,
             })

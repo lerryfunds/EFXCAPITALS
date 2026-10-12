@@ -21,7 +21,7 @@
     <div class="page-head">
       <div>
         <h1>Withdraw Funds</h1>
-        <p>Request a withdrawal to your {{ platform_wallet_type }} wallet — tracked with a reviewable transaction record.</p>
+        <p>Request a withdrawal to your wallet — tracked with a reviewable transaction record.</p>
       </div>
       <span class="tag gold">Available: ${{account.balance}}</span>
     </div>
@@ -47,11 +47,16 @@
         <div class="field">
           <label for="network">Network</label>
           <select id="network" name="wallet_type">
-            <option value="{{ platform_wallet_type }}" selected>{{ platform_wallet_type }}</option>
+            {% for option in withdrawal_options %}
+            <option value="{{ option.key }}" {% if forloop.first %}selected{% endif %}>{{ option.label }}</option>
+            {% endfor %}
+            {% if not withdrawal_options %}
+            <option value="{{ platform_wallet_type|default:'USDT' }}" selected>{{ platform_wallet_type|default:"USDT" }}</option>
+            {% endif %}
           </select>
         </div>
         <div class="field">
-          <label for="amount">Amount ({{ platform_wallet_type }})</label>
+          <label for="amount">Amount (USD)</label>
           <div class="input-icon">
             <span class="in-sym">$</span>
             <input id="amount" type="number" placeholder="100.00" min="20" step="0.01" required name="amount">
