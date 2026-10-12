@@ -1,8 +1,9 @@
 from functools import wraps
 from django.contrib.auth import logout, update_session_auth_hash
 from django.shortcuts import render, redirect, get_object_or_404
-from core.models import User, Withdrawal, Account, Packages, userPackage, InvestmentPayout, Support, Transaction, Deposit, Referral, PlatformSettings, Wallet
+from core.models import User, Withdrawal, Account, Packages, userPackage, InvestmentPayout, Support, Transaction, Deposit, Referral, PlatformSettings, Wallet, PaymentRail
 from core.currency import get_rates, to_coin
+from core.rails import catalog_entry, valid_txid
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.db.models import F, Sum
@@ -24,6 +25,22 @@ def normalized_wallet_type(value):
 
 def normalized_tx_hash(value):
     return value.strip().upper()
+
+def sanitized_tx_hash(value):
+    tx = (value or "").strip()
+    if tx.startswith("0X"):
+        tx = "0x" + tx[2:]
+    return tx
+
+def effective_deposit_bounds(rail, entry):
+    min_dep = rail.min_deposit
+    max_dep = rail.max_deposit
+    if entry:
+        if min_dep is None and entry.get("min_deposit"):
+            min_dep = Decimal(entry["min_deposit"])
+        if max_dep is None and entry.get("max_deposit"):
+            max_dep = Decimal(entry["max_deposit"])
+    return min_dep, max_dep
 
 
 def ensure_user_wallets(user):
@@ -120,7 +137,7 @@ def withdraw(request):
     if not request.user.is_authenticated:
         return redirect("home")
 
-    account = get_object_or_404(Account, user = request.user)
+    account = get_object_or_404(Account, user=request.user)
     platform = PlatformSettings.load()
 
     if request.method == "POST":
@@ -131,11 +148,8 @@ def withdraw(request):
         address = form.get("address", "").strip()
         description = form.get("description", "").strip()
 
-        if wallet_type != normalized_wallet_type(platform.wallet_type):
-            messages.error(request, f"Withdrawals are only available in {platform.wallet_type}")
-            return redirect("withdraw")
-        if normalized_wallet_type(account.account_type) != normalized_wallet_type(platform.wallet_type):
-            messages.error(request, "Your account wallet type needs administrator review")
+        if not wallet_type:
+            messages.error(request, "Select a wallet/network type")
             return redirect("withdraw")
 
         if not address:
@@ -162,14 +176,7 @@ def withdraw(request):
             return redirect("withdraw")
 
         with transaction.atomic():
-            platform = PlatformSettings.objects.select_for_update().get(pk=1)
-            if wallet_type != normalized_wallet_type(platform.wallet_type):
-                messages.error(request, "Withdrawal settings changed; please try again")
-                return redirect("withdraw")
             locked_account = Account.objects.select_for_update().get(pk=account.pk)
-            if normalized_wallet_type(locked_account.account_type) != wallet_type:
-                messages.error(request, "Your account wallet type needs administrator review")
-                return redirect("withdraw")
             if amount > locked_account.balance:
                 messages.error(request, "ERROR: INSUFFICIENT FUNDS")
                 return redirect("withdraw")
@@ -196,11 +203,39 @@ def withdraw(request):
         return redirect("withdraw")
 
     prices = get_rates()
+    active_rails = PaymentRail.active_rails().filter(address__gt="")
+    withdrawal_options = []
+    if active_rails.exists():
+        for rail in active_rails:
+            withdrawal_options.append({
+                "key": rail.key,
+                "label": rail.label or rail.key,
+                "symbol": rail.symbol,
+            })
+    # Add platform/default type if not present
+    default_key = normalized_wallet_type(platform.wallet_type) or "USDT"
+    if not any(normalized_wallet_type(o["key"]) == default_key for o in withdrawal_options):
+        withdrawal_options.append({
+            "key": default_key,
+            "label": platform.wallet_type or default_key,
+            "symbol": default_key,
+        })
+    # Also add common types if not present
+    for extra in ["BTC", "ETH", "SOL", "USDC"]:
+        ek = normalized_wallet_type(extra)
+        if not any(normalized_wallet_type(o["key"]) == ek for o in withdrawal_options):
+            withdrawal_options.append({
+                "key": ek,
+                "label": ek,
+                "symbol": ek,
+            })
+
     context = {
-        "account" : account,
-        "prices" : prices,
-        "prices_json" : prices_json(prices),
+        "account": account,
+        "prices": prices,
+        "prices_json": prices_json(prices),
         "platform_wallet_type": platform.wallet_type,
+        "withdrawal_options": withdrawal_options,
     }
 
     return render(request, "withdraw.html", context)
@@ -393,15 +428,84 @@ def deposit(request):
     if request.method == "POST":
         form = request.POST
 
-        wallet_type = normalized_wallet_type(form.get("wallet_type", ""))
-        tx_hash = normalized_tx_hash(form.get("tx_hash", ""))
+        requested = (form.get("wallet_type", "") or "").strip()
+        tx_hash = sanitized_tx_hash(form.get("tx_hash", ""))
         raw_amount = form.get("amount", "").strip()
 
-        if wallet_type != normalized_wallet_type(platform.wallet_type):
-            messages.error(request, f"Deposits are only accepted in {platform.wallet_type}")
+        try:
+            raw_decimal = Decimal(raw_amount)
+        except (InvalidOperation, ValueError):
+            messages.error(request, "Enter a valid deposit amount")
             return redirect("deposit")
-        if normalized_wallet_type(account.account_type) != normalized_wallet_type(platform.wallet_type):
-            messages.error(request, "Your account wallet type needs administrator review")
+
+        rail = PaymentRail.objects.filter(key__iexact=requested, is_active=True).first()
+
+        if rail is not None and rail.address:
+            if not valid_txid(rail.key, tx_hash):
+                messages.error(request, "Enter a valid transaction hash")
+                return redirect("deposit")
+            if not raw_decimal.is_finite() or raw_decimal <= 0:
+                messages.error(request, "Enter a valid deposit amount")
+                return redirect("deposit")
+
+            entry = catalog_entry(rail.key)
+            coin_prec = int(entry["coin_decimals"]) if entry else 18
+            amount_coin = raw_decimal.quantize(Decimal("1E-%d" % coin_prec))
+            if not amount_coin.is_finite() or amount_coin <= 0:
+                messages.error(request, "Enter a valid deposit amount")
+                return redirect("deposit")
+            rate = get_rates().get(rail.symbol)
+            if rate is None or rate <= 0:
+                messages.error(request, "Deposit rate is temporarily unavailable")
+                return redirect("deposit")
+            amount_usd = (amount_coin * rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            min_dep, max_dep = effective_deposit_bounds(rail, entry)
+            if min_dep is not None and amount_usd < min_dep:
+                messages.error(request, f"Minimum deposit is ${min_dep}")
+                return redirect("deposit")
+            if max_dep is not None and amount_usd > max_dep:
+                messages.error(request, "Enter a valid deposit amount")
+                return redirect("deposit")
+            if amount_usd <= 0 or amount_usd > MAX_FINANCIAL_AMOUNT:
+                messages.error(request, "Enter a valid deposit amount")
+                return redirect("deposit")
+
+            try:
+                with transaction.atomic():
+                    locked_user = User.objects.select_for_update().get(pk=request.user.pk)
+                    Account.objects.select_for_update().get(pk=account.pk, user=locked_user)
+                    locked_rail = PaymentRail.objects.select_for_update().get(pk=rail.pk)
+                    if not locked_rail.is_active or not locked_rail.address:
+                        messages.error(request, "Deposit settings changed; please try again")
+                        return redirect("deposit")
+                    deposit = Deposit.objects.create(
+                        user=locked_user,
+                        amount=amount_usd,
+                        wallet_type=locked_rail.key,
+                        tx_hash=tx_hash,
+                        tx_hash_key=tx_hash.upper(),
+                        rail=locked_rail,
+                        amount_coin=amount_coin,
+                        rate_used=rate,
+                    )
+                    Transaction.objects.create(
+                        user=locked_user,
+                        tx_type="DEPOSIT",
+                        amount=amount_usd,
+                        status="PENDING",
+                        related_id=deposit.id,
+                        description=f"{locked_rail.key} deposit of {amount_coin} {rail.symbol} (${amount_usd})",
+                    )
+            except IntegrityError:
+                messages.error(request, "This transaction has already been submitted")
+                return redirect("deposit")
+
+            messages.success(request, "Deposit submitted, admin will credit your wallet after verification.")
+            return redirect("deposit")
+
+        # Legacy fallback: no active rail matched, use the single platform wallet
+        if not requested:
+            messages.error(request, "Select a network/wallet type")
             return redirect("deposit")
 
         if not platform.wallet_address:
@@ -413,9 +517,7 @@ def deposit(request):
             return redirect("deposit")
 
         try:
-            amount = Decimal(raw_amount).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            amount = raw_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         except (InvalidOperation, ValueError):
             messages.error(request, "Enter a valid deposit amount")
             return redirect("deposit")
@@ -431,10 +533,7 @@ def deposit(request):
         try:
             with transaction.atomic():
                 platform = PlatformSettings.objects.select_for_update().get(pk=1)
-                if (
-                    wallet_type != normalized_wallet_type(platform.wallet_type)
-                    or not platform.wallet_address
-                ):
+                if not platform.wallet_address:
                     messages.error(request, "Deposit settings changed; please try again")
                     return redirect("deposit")
                 locked_user = User.objects.select_for_update().get(pk=request.user.pk)
@@ -442,15 +541,12 @@ def deposit(request):
                     pk=account.pk,
                     user=locked_user,
                 )
-                if normalized_wallet_type(locked_account.account_type) != wallet_type:
-                    messages.error(request, "Your account wallet type needs administrator review")
-                    return redirect("deposit")
                 deposit = Deposit.objects.create(
                     user=locked_user,
                     amount=amount,
-                    wallet_type=wallet_type,
+                    wallet_type=requested,
                     tx_hash=tx_hash,
-                    tx_hash_key=tx_hash,
+                    tx_hash_key=tx_hash.upper(),
                 )
                 Transaction.objects.create(
                     user=locked_user,
@@ -458,7 +554,7 @@ def deposit(request):
                     amount=amount,
                     status="PENDING",
                     related_id=deposit.id,
-                    description=f"{wallet_type} deposit of ${amount}",
+                    description=f"{requested} deposit of ${amount}",
                 )
         except IntegrityError:
             messages.error(request, "This transaction has already been submitted")
@@ -468,9 +564,49 @@ def deposit(request):
         return redirect("deposit")
 
     prices = get_rates()
+    active_rails = PaymentRail.active_rails().filter(address__gt="")
+    if active_rails.exists():
+        options = []
+        for rail in active_rails:
+            entry = catalog_entry(rail.key)
+            min_dep, max_dep = effective_deposit_bounds(rail, entry)
+            options.append({
+                "key": rail.key,
+                "label": rail.label or rail.key,
+                "symbol": rail.symbol,
+                "address": rail.address,
+                "min": min_dep,
+                "max": max_dep,
+            })
+    else:
+        options = []
+        if platform.wallet_address:
+            pk = normalized_wallet_type(platform.wallet_type) or "USDT"
+            options.append({
+                "key": pk,
+                "label": platform.wallet_type,
+                "symbol": pk,
+                "address": platform.wallet_address,
+                "min": None,
+                "max": None,
+            })
+    # Add extra options even if rails exist but missing common ones? Also ensure common ones are available
+    existing_keys = {normalized_wallet_type(o["key"]) for o in options}
+    for extra in ["BTC", "ETH", "SOL", "USDC", "USDT"]:
+        ek = normalized_wallet_type(extra)
+        if ek not in existing_keys:
+            options.append({
+                "key": ek,
+                "label": extra,
+                "symbol": ek,
+                "address": "",
+                "min": None,
+                "max": None,
+            })
+
     context = {
         "account" : account,
-        "platform_address" : platform.wallet_address,
+        "options" : options,
         "platform_wallet_type": platform.wallet_type,
         "deposits" : Deposit.objects.filter(user = request.user).order_by("-date_requested")[:10],
         "prices" : prices,

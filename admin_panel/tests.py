@@ -393,6 +393,57 @@ class AdminFinancialSafetyTest(TestCase):
         self.assertEqual(deposit.status, "PENDING")
         self.assertEqual(self.account.balance, Decimal("100.00"))
 
+    def test_deposit_for_user_without_account_is_not_credited(self):
+        orphan = User.objects.create_user(username="orphan-user", password="x")
+        deposit = Deposit.objects.create(
+            user=orphan,
+            amount=Decimal("50.00"),
+            wallet_type="USDT",
+            tx_hash="0x" + "e" * 64,
+        )
+        Transaction.objects.create(
+            user=orphan,
+            tx_type="DEPOSIT",
+            amount=Decimal("50.00"),
+            status="PENDING",
+            related_id=deposit.id,
+        )
+
+        response = self.client.post(
+            f"/admin-secure-portal/deposits/approve/{deposit.id}/"
+        )
+
+        self.assertEqual(response.status_code, 302)
+        deposit.refresh_from_db()
+        self.assertEqual(deposit.status, "PENDING")
+        self.assertFalse(Account.objects.filter(user=orphan).exists())
+        self.assertFalse(AuditLog.objects.filter(action="Approved deposit").exists())
+
+    def test_deposit_with_prefixed_hash_is_approved(self):
+        deposit = Deposit.objects.create(
+            user=self.user,
+            amount=Decimal("50.00"),
+            wallet_type="USDT",
+            tx_hash="0X" + "1A" * 32,
+        )
+        Transaction.objects.create(
+            user=self.user,
+            tx_type="DEPOSIT",
+            amount=Decimal("50.00"),
+            status="PENDING",
+            related_id=deposit.id,
+        )
+
+        response = self.client.post(
+            f"/admin-secure-portal/deposits/approve/{deposit.id}/"
+        )
+
+        self.assertEqual(response.status_code, 302)
+        deposit.refresh_from_db()
+        self.account.refresh_from_db()
+        self.assertEqual(deposit.status, "APPROVED")
+        self.assertEqual(self.account.balance, Decimal("150.00"))
+
     def test_withdrawal_without_matching_ledger_is_not_refunded(self):
         withdrawal = Withdrawal.objects.create(
             user=self.user,

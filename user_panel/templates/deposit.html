@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deposit {{ platform_wallet_type }} — EFXCAPITALS</title>
+<title>Deposit — EFXCAPITALS</title>
 <link rel="icon" type="image/svg+xml" href="{% static "images/favicon.svg" %}">
 <link rel="stylesheet" href="{% static "css/style.css" %}">
 <link rel="stylesheet" href="{% static "css/app.css" %}">
@@ -20,8 +20,8 @@
   <main class="content">
     <div class="page-head">
       <div>
-        <h1>Deposit {{ platform_wallet_type }}</h1>
-        <p>Fund your wallet with {{ platform_wallet_type }} — funds are credited after admin approval.</p>
+        <h1>Deposit</h1>
+        <p>Fund your wallet — funds are credited after admin approval.</p>
       </div>
       <span class="tag gold">Wallet: ${{account.balance}}</span>
     </div>
@@ -35,33 +35,38 @@
     <div class="info-box">
       <h3>How to deposit</h3>
       <ol>
-        <li>Select a network and copy the deposit address below.</li>
-        <li>Send {{ platform_wallet_type }} from your wallet or exchange to that address.</li>
+        <li>Select a network below and copy the deposit address.</li>
+        <li>Send the selected currency from your wallet or exchange to that address.</li>
         <li>Paste the transaction hash (TXID) in the form and submit.</li>
         <li>Admin reviews and your balance is credited once approved.</li>
       </ol>
-      <div class="address-copy">
-        <address>{{ platform_address|default:"Set a platform wallet address in the admin settings" }}</address>
-        {% if platform_address %}
+      {% if options %}
+        <div class="address-copy">
+          <address id="depositAddress">{{ options.0.address }}</address>
           <button class="copy-btn" onclick="copyAddress(this)">Copy</button>
-        {% endif %}
-      </div>
+        </div>
+      {% else %}
+        <p style="font-size:13.5px;color:var(--red)">No deposit network is configured yet. Please check back later.</p>
+      {% endif %}
     </div>
 
+    {% if options %}
     <form class="panel" style="display:flex;flex-direction:column;gap:18px" method="post">
       {% csrf_token %}
       <div class="form-grid">
         <div class="field">
           <label for="network">Network</label>
           <select id="network" name="wallet_type">
-            <option value="{{ platform_wallet_type }}" selected>{{ platform_wallet_type }}</option>
+            {% for o in options %}
+            <option value="{{ o.key }}" data-symbol="{{ o.symbol }}" data-address="{{ o.address }}" data-min="{{ o.min|default_if_none:'' }}" data-max="{{ o.max|default_if_none:'' }}" {% if forloop.first %}selected{% endif %}>{{ o.label }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="field">
-          <label for="amount">Amount ({{ platform_wallet_type }})</label>
+          <label for="amount">Amount (<span id="amtSym">{{ options.0.symbol }}</span>)</label>
           <div class="input-icon">
-            <span class="in-sym">$</span>
-            <input id="amount" type="number" placeholder="100.00" min="1" step="0.01" required name="amount">
+            <span class="in-sym" id="inSym">$</span>
+            <input id="amount" type="number" placeholder="0.00" min="0" step="any" required name="amount">
           </div>
         </div>
         <div class="field full">
@@ -69,18 +74,24 @@
           <input id="txhash" type="text" placeholder="Paste the blockchain transaction ID" required name="tx_hash">
         </div>
       </div>
-      <div class="info-box" id="rateInfo">
-        <h3>Live rates</h3>
-        <p id="usdEst">1 USDT ≈ $1.00</p>
-      </div>
       <div class="warn">
         <span class="w-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         </span>
-        <span>Only send <b>{{ platform_wallet_type }}</b> on the selected network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
+        <span>Only send the selected currency on its network to the address above. Sending on the wrong network may result in loss of funds. Deposits are credited after admin verification.</span>
       </div>
       <button type="submit" class="btn btn-gold btn-block">Submit Deposit</button>
     </form>
+    {% else %}
+      <div class="panel" style="padding:18px">
+        <p style="font-size:13.5px;color:var(--red)">Deposits are temporarily unavailable.</p>
+      </div>
+    {% endif %}
+
+    <div class="info-box" id="rateInfo">
+      <h3>Live rates</h3>
+      <p id="usdEst">—</p>
+    </div>
 
     <div class="panel" style="margin-top:18px">
       <div class="panel-head">
@@ -112,7 +123,8 @@
 <script>
 window.CRYPTORATES = {{ prices_json|safe }};
 function copyAddress(btn){
-  navigator.clipboard.writeText(document.querySelector('address').textContent.trim()).then(()=>{
+  const addr = document.querySelector('#depositAddress');
+  navigator.clipboard.writeText(addr ? addr.textContent.trim() : '').then(()=>{
     const t = btn.textContent;
     btn.textContent = 'Copied!';
     setTimeout(()=>btn.textContent = t, 1600);
@@ -125,17 +137,22 @@ function copyAddress(btn){
   const net = document.getElementById('network');
   const amt = document.getElementById('amount');
   const est = document.getElementById('usdEst');
+  const addr = document.getElementById('depositAddress');
+  const amtSym = document.getElementById('amtSym');
   const symb = (v)=> Number(v).toLocaleString('en-US',{maximumFractionDigits:2});
   function update(){
-    const sym = (net.value || 'USDT').toUpperCase();
+    if(!net) return;
+    const opt = net.options[net.selectedIndex];
+    const sym = (opt.dataset.symbol || 'USDT').toUpperCase();
+    if(addr) addr.textContent = opt.dataset.address || '';
+    if(amtSym) amtSym.textContent = sym;
     const rate = rates[sym];
-    const usd = parseFloat(amt.value) || 0;
-    if(sym === 'USDT' || !rate){
-      est.textContent = rates.USDT ? `1 ${sym} ≈ $${symb(rates.USDT)}` : 'Rate unavailable';
+    const coin = parseFloat(amt.value) || 0;
+    if(!rate || sym === 'USDT'){
+      est.textContent = rate ? `1 ${sym} ≈ $${symb(rate)}` : 'Rate unavailable';
       return;
     }
-    const coin = usd / rate;
-    est.textContent = `1 ${sym} ≈ $${symb(rate)} USD · $${symb(usd)} ≈ ${coin.toFixed(6)} ${sym}`;
+    est.textContent = `1 ${sym} ≈ $${symb(rate)} USD · ${symb(coin)} ${sym} ≈ $${symb(coin * rate)}`;
   }
   if(net) net.addEventListener('change', update);
   if(amt) amt.addEventListener('input', update);
